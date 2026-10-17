@@ -23,6 +23,10 @@ TURN_AROUND = (0.0, 1.0, 0.0, 0.0)       # 180 degrees about Y
 LOOK_DOWN_50 = (0.4226, 0.0, 0.0, 0.9063)  # 50 degrees about X: pointing down and away
 YAW_25 = (0.0, 0.2164, 0.0, 0.9763)        # 25 degrees about Y
 
+# The render buffer every scene fits in: the valley's need (145188 bytes at
+# phase 2) with some room. Its ordering table is under the title's own.
+RENDER_BUMP = 160 * 1024
+
 # Colours, 0..1.
 AMBER = [1.0, 0.78, 0.42]
 PALE = [0.82, 0.84, 0.9]
@@ -53,20 +57,59 @@ def script(path):
     return {"type": "script", "lua": path}
 
 
-def player():
-    return {"type": "player", "playerHeight": 1.8, "playerRadius": 0.5, "moveSpeed": 3.0,
-            "sprintSpeed": 8.0, "maxStepHeight": 0.35, "walkableSlopeAngle": 46.0,
-            "navCellSize": 0.05, "navCellHeight": 0.025, "navMinRegionArea": 8,
-            "navMergeRegionArea": 20, "navMaxSimplifyError": 1.3, "navMaxEdgeLength": 12.0,
-            "navPartitionMethod": "watershed", "navDetailSampleDist": 6.0,
-            "navDetailMaxError": 0.025, "navMaxPlaneError": 0.15, "jumpHeight": 2.0,
-            "gravity": 20.0}
+def player(nav=None):
+    p = {"type": "player", "playerHeight": 1.8, "playerRadius": 0.5, "moveSpeed": 3.0,
+         "sprintSpeed": 8.0, "maxStepHeight": 0.35, "walkableSlopeAngle": 46.0,
+         "navCellSize": 0.05, "navCellHeight": 0.025, "navMinRegionArea": 8,
+         "navMergeRegionArea": 20, "navMaxSimplifyError": 1.3, "navMaxEdgeLength": 12.0,
+         "navPartitionMethod": "watershed", "navDetailSampleDist": 6.0,
+         "navDetailMaxError": 0.025, "navMaxPlaneError": 0.15, "jumpHeight": 2.0,
+         "gravity": 20.0}
+    p.update(nav or {})
+    return p
 
 
 def sun(color=(1.0, 0.95, 0.85), intensity=0.75):
     return {"type": "light", "kind": "directional", "color": list(color), "intensity": intensity,
             "range": 10.0, "spotAngle": 30.0, "innerSpotAngle": 0.0, "enabled": True,
             "runtime": False}
+
+
+def lamp(color, intensity, range_, enabled=False):
+    # A point light lit on the console (runtime): it goes in psxsplash's light
+    # table, at most 16 a scene, where Light.Find finds it by its object's name.
+    return {"type": "light", "kind": "point", "color": list(color), "intensity": intensity,
+            "range": range_, "spotAngle": 30.0, "innerSpotAngle": 0.0, "enabled": enabled,
+            "runtime": True}
+
+
+# The editor's Terrain nav bake preset (core/scene.cpp applyNavPreset): the ten
+# region-building fields. Step height and slope stay the player's own.
+TERRAIN_NAV = {"navCellSize": 0.08, "navCellHeight": 0.04, "navMinRegionArea": 4,
+               "navMergeRegionArea": 6, "navMaxSimplifyError": 0.4, "navMaxEdgeLength": 5.0,
+               "navPartitionMethod": "monotone", "navDetailSampleDist": 4.0,
+               "navDetailMaxError": 0.02, "navMaxPlaneError": 0.1}
+
+
+def interactable(radius, button, repeatable=True):
+    # button is a pad bit: 13 Circle, 14 Cross (which also jumps).
+    return {"type": "interactable", "radius": radius, "button": button, "repeatable": repeatable,
+            "cooldownFrames": 30, "showPrompt": False, "promptCanvas": "", "lineOfSight": False,
+            "facingAngle": 90.0}
+
+
+def trigger(size, lua):
+    return {"type": "trigger", "size": list(size), "lua": lua}
+
+
+def walkoff(size):
+    # Nav boundary edges whose midpoint lies in this box let the player walk off.
+    return {"type": "walkoff", "size": list(size)}
+
+
+def audio(clip, name, loop=False, volume=100):
+    return {"type": "audio", "clip": clip, "clipName": name, "sampleRate": 22050, "loop": loop,
+            "defaultVolume": volume, "trimLeadingSilence": False}
 
 
 # UI. Rects are screen pixels on the 320 x 240 screen, anchored to its top
@@ -135,6 +178,8 @@ def title_canvas():
     return canvas("Title", [
         text("title", "LAMPLIGHTER", 60, 30, 210, 36, AMBER, font="title"),
         text("tagline", "Relight the beacons", 84, 70, 160, 10, DIM),
+        # Shown by title.lua after a fall off the valley's cliffs.
+        text("lost", "You fell from the cliff edge", 48, 104, 230, 10, AMBER, visible=False),
         text("newgame", "New game", 112, 148, 100, 24, PALE, font="menu"),
         text("continue", "Continue", 112, 172, 100, 24, PALE, font="menu", visible=False),
         text("cursor", ">", 92, 148, 16, 24, AMBER, font="menu"),
@@ -143,11 +188,21 @@ def title_canvas():
 
 
 def scene(objects, sceneType="exterior", script=None, canvases=(), loading=None,
-          sky=(0.5, 0.5, 0.6)):
+          sky=(0.5, 0.5, 0.6), fog=0, stream=False, bump=0):
     # psxsplash clears the screen to the fog colour, fog on or off: `sky`.
+    # `fog` is the density, 0 for none: the far plane is 20000 / density in
+    # screen depth, about 98 m at 5 with this GTE scaling.
     settings = {"gteScaling": 100.0, "sceneType": sceneType,
-                "fog": {"enabled": False, "color": list(sky), "density": 5},
+                "fog": {"enabled": fog > 0, "color": list(sky), "density": fog or 5},
                 "networkId": "", "script": script, "memCard": dict(MEMCARD)}
+    if bump:
+        # psxsplash sizes its render buffers once, from the first scene it
+        # loads, and stops on a later scene that needs more: the title (scene
+        # 0) asks for the most any scene needs (`bump=` in export --stats).
+        settings["bumpAllocatorSize"] = bump
+    if stream:
+        # Static scenery streams off the disc by region (no CD-DA in such a scene).
+        settings["streamWorld"] = True
     canvases = list(canvases)
     if loading is not None:
         settings["loadingCanvas"] = "Loading"
@@ -178,7 +233,67 @@ def title():
         obj("Player", [player()], pos=(0.0, 0.5, 2.0)),
         obj("Menu", [script("scripts/title.lua")]),
         obj("Moon", [moon], rot=LOOK_DOWN_50),
-    ], canvases=[title_canvas()], loading="", sky=(0.03, 0.04, 0.1))
+    ], canvases=[title_canvas()], loading="", sky=(0.03, 0.04, 0.1), bump=RENDER_BUMP)
+
+
+# The valley's terrain: art/models.py builds a 14 x 14 grid of 32 m ground
+# chunks (x -224..224, z -440..8) and a cliff face under each chunk of the north
+# rim at z = 8, all as nodes of models/valley at the world origin.
+VALLEY_COLS = VALLEY_ROWS = 14
+VALLEY_RIM_Z = 8.0
+VALLEY_SEA_Y = -12.0
+FOG = (0.45, 0.5, 0.58)
+EMBER = (1.0, 0.62, 0.25)
+
+# The beacons: name, base position. Bases sit 0.6 m into the ground, which
+# swells and dips by up to 0.55 m away from the start. BeaconA is 5 m ahead of
+# the start, right of the way to the rim and in reach after a few steps;
+# the others are further up the valley.
+BEACONS = [("BeaconA", (2.0, -0.6, 5.0)), ("BeaconB", (-12.0, -0.6, -18.0)),
+           ("BeaconC", (14.0, -0.6, -36.0))]
+
+
+def beacon(name, pos):
+    # beacons.blocks, shared by all three, tells them apart by `my name`:
+    # interacting remembers beacon_<name> = 1 and turns on <name>_light.
+    # psxsplash measures the reach from the player's eyes to the object's
+    # origin, the buried base, so 5 m is about 4.3 m across the ground.
+    return obj(name, [mesh("models/beacon.mesh", "textures/stone.png"), collider(),
+                      interactable(5.0, 13, repeatable=False), script("scripts/beacons.blocks")],
+               pos=pos)
+
+
+def beacon_light(name, pos):
+    # Over the beacon's cap, dark until lit.
+    return obj(name + "_light", [lamp(EMBER, 2.0, 9.0)], pos=(pos[0], pos[1] + 2.9, pos[2]))
+
+
+def valley():
+    # Dusk in a fog-bound valley that ends to the north in a cliff over the
+    # sea. The player starts 8 m from the rim facing it (+z), BeaconA close
+    # by on the right.
+    ground = [obj(f"Ground {r}-{c}", [mesh(f"models/valley/ground_{r}_{c}.mesh", "textures/grass.png"),
+                                      collider()])
+              for r in range(VALLEY_ROWS) for c in range(VALLEY_COLS)]
+    cliffs = [obj(f"Cliff {c}", [mesh(f"models/valley/cliff_{c}.mesh", "textures/rock.png")])
+              for c in range(VALLEY_COLS)]
+    return scene([
+        *ground,
+        *cliffs,
+        obj("Sea", [mesh("models/sea.mesh", "textures/sea.png", color=(0.7, 0.75, 0.9, 1.0))],
+            pos=(0.0, VALLEY_SEA_Y, VALLEY_RIM_Z + 48.0), scale=(4.8, 1.0, 1.0)),
+        *[beacon(n, p) for n, p in BEACONS],
+        *[beacon_light(n, p) for n, p in BEACONS],
+        # The whole rim can be walked off; the box below it catches the fall.
+        obj("Rim edge", [walkoff((448.0, 40.0, 3.0))], pos=(0.0, 4.0, VALLEY_RIM_Z)),
+        obj("Fall", [trigger((460.0, 10.0, 24.0), "scripts/fall.lua")],
+            pos=(0.0, -8.0, VALLEY_RIM_Z + 10.0)),
+        obj("Ignite sound", [audio("sounds/ignite.wav", "ignite")]),
+        obj("Chime sound", [audio("sounds/chime.wav", "chime")]),
+        obj("Wind sound", [audio("sounds/wind.wav", "wind", loop=True)]),
+        obj("Player", [player(TERRAIN_NAV)], pos=(0.0, 0.5, 0.0)),
+        obj("Sun", [sun(color=(0.85, 0.82, 0.9), intensity=0.6)], rot=LOOK_DOWN_50),
+    ], script="scripts/valley.lua", loading="The valley", sky=FOG, fog=10, stream=True)
 
 
 def placeholder(texture, caption, script=None):
@@ -203,7 +318,7 @@ def main():
     os.makedirs(PROJECT, exist_ok=True)
     scenes = {
         "title": title(),
-        "valley": placeholder("grass.png", "The valley", script="scripts/valley.lua"),
+        "valley": valley(),
         "keep": placeholder("stone.png", "The keep"),
         "lighthouse": placeholder("stone.png", "The lighthouse"),
     }

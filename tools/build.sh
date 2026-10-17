@@ -20,5 +20,6 @@ for t in title valley; do
     # A fixed stream serial keeps the encode the same from run to run.
     oggenc -Q -q 2 --serial 1 -o project/music/$t.ogg art/out/music/$t.wav
 done
+python3 -P art/sfx.py project/sounds
 python3 -P tools/scenes.py project
 for s in project/*.scene; do "$cli" resave "$s" "$s"; done

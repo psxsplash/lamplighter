@@ -8,7 +8,7 @@ on:
 # The editor and engine revisions the game is checked against. Bump both
 # together when the game starts using something newer.
 env:
-  EDITOR_REF: fb7a9497c3187c847a8621aa5d1e2855578331a5
+  EDITOR_REF: d71f8a22367b9cce817447ad145a8cf766b51296
   ENGINE_REF: f67120222d5501d53e21254fafebf0c4ff98f66a
 
 jobs:

@@ -6,6 +6,7 @@
 -- Game state lives in Persist, which keeps numbers across Scene.Load:
 --   beacons  bit mask of the relit beacons (1, 2, 4)
 --   lamp     1 once the lighthouse lamp is lit
+--   lost     1 when the player fell off a cliff: the title shows "lost"
 -- A save is the table {scene = <index>, beacons = <mask>, lamp = <0 or 1>}
 -- under SAVE_KEY on the card in port 0.
 
@@ -36,8 +37,26 @@ local function show()
     UI.SetPosition(cursor, CURSOR_X, itemY(choice))
 end
 
+-- The valley's beacons script (beacons.blocks) also keeps one key per beacon,
+-- beacon_<name> = 1 once lit; they follow the bits of `beacons`.
+local BEACONS = {"BeaconA", "BeaconB", "BeaconC"}
+
+local function setBeacons(mask)
+    Persist.Set("beacons", mask)
+    local bit = 4
+    for i = 3, 1, -1 do
+        local on = 0
+        if mask >= bit then
+            on = 1
+            mask = mask - bit
+        end
+        Persist.Set("beacon_" .. BEACONS[i], on)
+        bit = bit / 2
+    end
+end
+
 local function resetState()
-    Persist.Set("beacons", 0)
+    setBeacons(0)
     Persist.Set("lamp", 0)
 end
 
@@ -52,6 +71,11 @@ function onCreate(self)
     save = MemCard.Load(0, SAVE_KEY)
     if type(save) ~= "table" or save.scene == nil then save = nil end
     UI.SetVisible(continue, save ~= nil)
+    -- Back from a fall off a cliff (scripts/fall.lua): say so, once.
+    if Persist.Get("lost") == 1 then
+        UI.SetVisible(UI.FindElement(canvas, "lost"), true)
+        Persist.Set("lost", 0)
+    end
     show()
     Audio.PlayCDDA(2)
 end
@@ -70,7 +94,7 @@ function onButtonPress(self, button)
             Scene.Load(VALLEY)
         else
             resetState()
-            Persist.Set("beacons", save.beacons or 0)
+            setBeacons(save.beacons or 0)
             Persist.Set("lamp", save.lamp or 0)
             Scene.Load(save.scene)
         end
