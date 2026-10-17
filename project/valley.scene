@@ -12057,6 +12057,90 @@
       "children": []
     },
     {
+      "name": "Keep gate",
+      "active": true,
+      "transform": {
+        "position": [
+          -5.0,
+          -0.1,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "components": [
+        {
+          "type": "mesh",
+          "mesh": "models/arch/arch.mesh",
+          "materials": [
+            {
+              "texture": "textures/stone.png",
+              "color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "bitDepth": 8,
+          "vertexColors": "baked",
+          "flatColor": [
+            128,
+            128,
+            128
+          ],
+          "smoothNormals": true,
+          "uvOffsetMaterial": 0,
+          "dynamicLighting": "auto"
+        }
+      ],
+      "children": []
+    },
+    {
+      "name": "Keep door",
+      "active": true,
+      "transform": {
+        "position": [
+          -5.0,
+          1.5,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "components": [
+        {
+          "type": "trigger",
+          "size": [
+            1.2,
+            3.0,
+            2.0
+          ],
+          "lua": "scripts/keep_door.lua"
+        }
+      ],
+      "children": []
+    },
+    {
       "name": "Player",
       "active": true,
       "transform": {

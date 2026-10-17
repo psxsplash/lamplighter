@@ -83,6 +83,13 @@ def lamp(color, intensity, range_, enabled=False):
             "runtime": True}
 
 
+def baked_lamp(color, intensity, range_):
+    # A point light baked into the vertex colours at export, not lit on the console.
+    return {"type": "light", "kind": "point", "color": list(color), "intensity": intensity,
+            "range": range_, "spotAngle": 30.0, "innerSpotAngle": 0.0, "enabled": True,
+            "runtime": False}
+
+
 # The editor's Terrain nav bake preset (core/scene.cpp applyNavPreset): the ten
 # region-building fields. Step height and slope stay the player's own.
 TERRAIN_NAV = {"navCellSize": 0.08, "navCellHeight": 0.04, "navMinRegionArea": 4,
@@ -153,8 +160,8 @@ def progress(name, rect, color, background, value=0):
     return element("progress", name, rect, color, background=list(background), value=value)
 
 
-def canvas(name, elements, sortOrder=0, defaultFont=None):
-    return {"name": name, "visible": True, "sortOrder": sortOrder, "defaultFont": defaultFont,
+def canvas(name, elements, sortOrder=0, defaultFont=None, visible=True):
+    return {"name": name, "visible": visible, "sortOrder": sortOrder, "defaultFont": defaultFont,
             "elements": elements}
 
 
@@ -291,9 +298,104 @@ def valley():
         obj("Ignite sound", [audio("sounds/ignite.wav", "ignite")]),
         obj("Chime sound", [audio("sounds/chime.wav", "chime")]),
         obj("Wind sound", [audio("sounds/wind.wav", "wind", loop=True)]),
+        # The keep's gate, 5 m to the left of the start: walking through it
+        # opens the keep (scene 2).
+        obj("Keep gate", [mesh("models/arch/arch.mesh", "textures/stone.png")], pos=KEEP_GATE),
+        obj("Keep door", [trigger((1.2, 3.0, 2.0), "scripts/keep_door.lua")],
+            pos=(KEEP_GATE[0], 1.5, KEEP_GATE[2])),
         obj("Player", [player(TERRAIN_NAV)], pos=(0.0, 0.5, 0.0)),
         obj("Sun", [sun(color=(0.85, 0.82, 0.9), intensity=0.6)], rot=LOOK_DOWN_50),
     ], script="scripts/valley.lua", loading="The valley", sky=FOG, fog=10, stream=True)
+
+
+# Where the keep's gate stands in the valley: left of the start (-x), the
+# way through running along x. The ground there is within 0.1 m of y = 0.
+KEEP_GATE = (-5.0, -0.1, 0.0)
+
+# The keep, phase 3: three rooms joined by doorways, built by art/models.py
+# as models/keep/{hall,study,chamber} at the world origin. Each room object
+# carries its Room box, a little inside its walls (the exporter adds 0.5 m a
+# side when it sorts triangles into rooms), and a Portal object stands in
+# each doorway, 2 m wide and 2.6 m tall, its local +z through the doorway.
+KEEP_ROOMS = [
+    # object, mesh, box centre, box size
+    ("Hall", "hall", (-0.05, 1.75, 5.95), (7.9, 3.5, 11.9)),
+    ("Study", "study", (0.0, 1.75, 16.05), (8.0, 3.5, 7.9)),
+    ("Chamber", "chamber", (7.05, 1.75, 6.0), (5.9, 3.5, 6.0)),
+]
+KEEP_PORTALS = [
+    # object, room A, room B, centre, rotation
+    ("Study door", "Hall", "Study", (0.0, 1.3, 12.0), (0.0, 0.0, 0.0, 1.0)),
+    ("Chamber door", "Hall", "Chamber", (4.0, 1.3, 6.0), (0.0, 0.7071068, 0.0, 0.7071068)),
+]
+KEEP_DOOR = (2.0, 2.6)  # width, height
+CANDLE = (1.0, 0.72, 0.4)
+KEEP_DARK = (0.02, 0.02, 0.05)
+
+# The keeper's clip set: SkinnedAnim.Play("Keeper", "idle" or "talk").
+KEEPER_CLIPS = ["models/keeper/idle.anim", "models/keeper/talk.anim"]
+# Robe, hood and skin, in the order of the model's materials.
+KEEPER_COLOURS = [(0.22, 0.24, 0.42, 1.0), (0.16, 0.17, 0.3, 1.0), (0.85, 0.66, 0.52, 1.0)]
+
+
+def room(size, offset):
+    return {"type": "room", "size": list(size), "offset": list(offset)}
+
+
+def portal(a, b, width, height):
+    return {"type": "portal", "roomA": a, "roomB": b, "width": width, "height": height}
+
+
+def skin(clips, fps=15):
+    return {"type": "skin", "clips": list(clips), "fps": fps}
+
+
+def keeper():
+    # In the study, facing the hall door. keeper.lua plays idle from the
+    # start and talk while the dialogue is up; Circle in reach steps it.
+    # psxsplash measures the reach from the eyes to his feet, so 3 m is
+    # about 2.4 m across the floor.
+    m = mesh("models/keeper/keeper.mesh")
+    m["materials"] = [{"texture": None, "color": list(c)} for c in KEEPER_COLOURS]
+    return obj("Keeper", [m, skin(KEEPER_CLIPS), interactable(3.0, 13), script("scripts/keeper.lua")],
+               pos=(0.0, 0.0, 16.5), rot=TURN_AROUND)
+
+
+def dialogue_canvas():
+    # Hidden until the keeper speaks; keeper.lua shows it and sets "body"
+    # one line a press. The system font takes no line breaks, so a line is
+    # one row of at most 34 characters.
+    return canvas("Dialogue", [
+        box("panel", (16, 164, 288, 60), [0.04, 0.05, 0.12]),
+        text("name", "The keeper", 28, 168, 140, 24, AMBER, font="menu"),
+        text("body", "", 28, 198, 272, 10, PALE),
+        text("hint", "O", 286, 210, 10, 10, DIM),
+    ], sortOrder=10, visible=False)
+
+
+def keep():
+    # The keeper's tower, indoors at night: the player comes in by the south
+    # door of the hall (the way out behind them) facing the study door, the
+    # keeper visible beyond it; the side chamber opens to the right.
+    rooms = [obj(name, [mesh(f"models/keep/{m}.mesh", "textures/stone.png"), collider(),
+                        room(size, centre)])
+             for name, m, centre, size in KEEP_ROOMS]
+    portals = [obj(name, [portal(a, b, *KEEP_DOOR)], pos=pos, rot=rot)
+               for name, a, b, pos, rot in KEEP_PORTALS]
+    return scene([
+        *rooms,
+        *portals,
+        keeper(),
+        obj("Way out", [trigger((2.0, 3.0, 1.0), "scripts/keep_exit.lua")], pos=(0.0, 1.5, 0.5)),
+        # Candles, baked into the walls.
+        obj("Hall candle", [baked_lamp(CANDLE, 1.2, 9.0)], pos=(-2.0, 3.0, 6.0)),
+        obj("Study candle", [baked_lamp(CANDLE, 1.4, 8.0)], pos=(2.0, 3.0, 17.0)),
+        obj("Chamber candle", [baked_lamp(CANDLE, 1.0, 7.0)], pos=(8.0, 3.0, 6.0)),
+        # Half a metre up: the exporter puts the eyes on the floor below.
+        # player()'s nav fields are the editor's Indoor bake preset.
+        obj("Player", [player()], pos=(0.0, 0.5, 2.5)),
+        obj("Moon", [sun(color=(0.5, 0.55, 0.8), intensity=0.35)], rot=LOOK_DOWN_50),
+    ], sceneType="interior", canvases=[dialogue_canvas()], loading="The keep", sky=KEEP_DARK)
 
 
 def placeholder(texture, caption, script=None):
@@ -319,7 +421,7 @@ def main():
     scenes = {
         "title": title(),
         "valley": valley(),
-        "keep": placeholder("stone.png", "The keep"),
+        "keep": keep(),
         "lighthouse": placeholder("stone.png", "The lighthouse"),
     }
     for name in SCENES:
