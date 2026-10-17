@@ -305,9 +305,9 @@
         ],
         "rotation": [
           0.0,
-          1.0,
+          0.9537,
           0.0,
-          0.0
+          0.3007
         ],
         "scale": [
           1.0,
@@ -323,18 +323,18 @@
             {
               "texture": null,
               "color": [
+                0.55,
+                0.32,
                 0.22,
-                0.24,
-                0.42,
                 1.0
               ]
             },
             {
               "texture": null,
               "color": [
+                0.38,
+                0.22,
                 0.16,
-                0.17,
-                0.3,
                 1.0
               ]
             },
@@ -365,7 +365,7 @@
         },
         {
           "type": "interactable",
-          "radius": 3.0,
+          "radius": 4.0,
           "button": 13,
           "repeatable": true,
           "cooldownFrames": 30,
@@ -449,8 +449,8 @@
             0.72,
             0.4
           ],
-          "intensity": 1.2,
-          "range": 9.0,
+          "intensity": 2.0,
+          "range": 10.0,
           "spotAngle": 30.0,
           "innerSpotAngle": 0.0,
           "enabled": true,
@@ -489,8 +489,8 @@
             0.72,
             0.4
           ],
-          "intensity": 1.4,
-          "range": 8.0,
+          "intensity": 2.4,
+          "range": 9.0,
           "spotAngle": 30.0,
           "innerSpotAngle": 0.0,
           "enabled": true,
@@ -529,8 +529,8 @@
             0.72,
             0.4
           ],
-          "intensity": 1.0,
-          "range": 7.0,
+          "intensity": 1.8,
+          "range": 8.0,
           "spotAngle": 30.0,
           "innerSpotAngle": 0.0,
           "enabled": true,
@@ -615,7 +615,7 @@
             0.55,
             0.8
           ],
-          "intensity": 0.35,
+          "intensity": 0.6,
           "range": 10.0,
           "spotAngle": 30.0,
           "innerSpotAngle": 0.0,

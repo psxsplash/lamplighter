@@ -448,7 +448,7 @@ KEEPER_PARTS = [
     ("thigh_r", "robe", (-0.11, 0, 0.69), (0.2, 0.26, 0.42)),
     ("shin_r", "robe", (-0.12, 0, 0.26), (0.22, 0.28, 0.46)),
 ]
-KEEPER_MATERIALS = [("robe", (0.22, 0.24, 0.42, 1.0)), ("hood", (0.16, 0.17, 0.3, 1.0)),
+KEEPER_MATERIALS = [("robe", (0.55, 0.32, 0.22, 1.0)), ("hood", (0.38, 0.22, 0.16, 1.0)),
                     ("skin", (0.85, 0.66, 0.52, 1.0))]
 
 
@@ -532,14 +532,14 @@ def keeper():
     # waving as the keeper speaks.
     up = quat((1, 0, 0), -70)
     keeper_action(arm, "talk", 24, [
-        (1, {"forearm_r": up, "arm_r": quat((1, 0, 0), -20)}),
-        (6, {"forearm_r": quat((1, 0, 0), -85) @ quat((0, 1, 0), 20), "arm_r": quat((1, 0, 0), -25),
+        (1, {"forearm_r": up, "arm_r": quat((1, 0, 0), -50)}),
+        (6, {"forearm_r": quat((1, 0, 0), -85) @ quat((0, 1, 0), 20), "arm_r": quat((1, 0, 0), -60),
              "head": quat((1, 0, 0), 10)}),
-        (12, {"forearm_r": up, "arm_r": quat((1, 0, 0), -20), "head": quat((1, 0, 0), -4),
+        (12, {"forearm_r": up, "arm_r": quat((1, 0, 0), -50), "head": quat((1, 0, 0), -4),
               "chest": quat((0, 0, 1), 5)}),
-        (18, {"forearm_r": quat((1, 0, 0), -85) @ quat((0, 1, 0), -20), "arm_r": quat((1, 0, 0), -25),
+        (18, {"forearm_r": quat((1, 0, 0), -85) @ quat((0, 1, 0), -20), "arm_r": quat((1, 0, 0), -60),
               "head": quat((1, 0, 0), 10)}),
-        (24, {"forearm_r": up, "arm_r": quat((1, 0, 0), -20)}),
+        (24, {"forearm_r": up, "arm_r": quat((1, 0, 0), -50)}),
     ])
     os.makedirs(OUT, exist_ok=True)
     bpy.ops.export_scene.gltf(filepath=os.path.join(OUT, "keeper.glb"), export_format="GLB",

@@ -22,6 +22,7 @@ MEMCARD = {"enabled": True, "region": "BA", "product": "LAMP-00001", "title": "L
 TURN_AROUND = (0.0, 1.0, 0.0, 0.0)       # 180 degrees about Y
 LOOK_DOWN_50 = (0.4226, 0.0, 0.0, 0.9063)  # 50 degrees about X: pointing down and away
 YAW_25 = (0.0, 0.2164, 0.0, 0.9763)        # 25 degrees about Y
+YAW_145 = (0.0, 0.9537, 0.0, 0.3007)       # 145 degrees about Y
 
 # The render buffer every scene fits in: the valley's need (145188 bytes at
 # phase 2) with some room. Its ordering table is under the title's own.
@@ -335,7 +336,7 @@ KEEP_DARK = (0.02, 0.02, 0.05)
 # The keeper's clip set: SkinnedAnim.Play("Keeper", "idle" or "talk").
 KEEPER_CLIPS = ["models/keeper/idle.anim", "models/keeper/talk.anim"]
 # Robe, hood and skin, in the order of the model's materials.
-KEEPER_COLOURS = [(0.22, 0.24, 0.42, 1.0), (0.16, 0.17, 0.3, 1.0), (0.85, 0.66, 0.52, 1.0)]
+KEEPER_COLOURS = [(0.55, 0.32, 0.22, 1.0), (0.38, 0.22, 0.16, 1.0), (0.85, 0.66, 0.52, 1.0)]
 
 
 def room(size, offset):
@@ -351,14 +352,15 @@ def skin(clips, fps=15):
 
 
 def keeper():
-    # In the study, facing the hall door. keeper.lua plays idle from the
-    # start and talk while the dialogue is up; Circle in reach steps it.
-    # psxsplash measures the reach from the eyes to his feet, so 3 m is
-    # about 2.4 m across the floor.
+    # In the study, turned three quarters to the hall door, so his talking
+    # arm reads in profile. keeper.lua plays idle from the start and talk
+    # while the dialogue is up; Circle in reach steps it.
+    # psxsplash measures the reach from the eyes to his feet, so 4 m is
+    # about 3.5 m across the floor.
     m = mesh("models/keeper/keeper.mesh")
     m["materials"] = [{"texture": None, "color": list(c)} for c in KEEPER_COLOURS]
-    return obj("Keeper", [m, skin(KEEPER_CLIPS), interactable(3.0, 13), script("scripts/keeper.lua")],
-               pos=(0.0, 0.0, 16.5), rot=TURN_AROUND)
+    return obj("Keeper", [m, skin(KEEPER_CLIPS), interactable(4.0, 13), script("scripts/keeper.lua")],
+               pos=(0.0, 0.0, 16.5), rot=YAW_145)
 
 
 def dialogue_canvas():
@@ -388,13 +390,13 @@ def keep():
         keeper(),
         obj("Way out", [trigger((2.0, 3.0, 1.0), "scripts/keep_exit.lua")], pos=(0.0, 1.5, 0.5)),
         # Candles, baked into the walls.
-        obj("Hall candle", [baked_lamp(CANDLE, 1.2, 9.0)], pos=(-2.0, 3.0, 6.0)),
-        obj("Study candle", [baked_lamp(CANDLE, 1.4, 8.0)], pos=(2.0, 3.0, 17.0)),
-        obj("Chamber candle", [baked_lamp(CANDLE, 1.0, 7.0)], pos=(8.0, 3.0, 6.0)),
+        obj("Hall candle", [baked_lamp(CANDLE, 2.0, 10.0)], pos=(-2.0, 3.0, 6.0)),
+        obj("Study candle", [baked_lamp(CANDLE, 2.4, 9.0)], pos=(2.0, 3.0, 17.0)),
+        obj("Chamber candle", [baked_lamp(CANDLE, 1.8, 8.0)], pos=(8.0, 3.0, 6.0)),
         # Half a metre up: the exporter puts the eyes on the floor below.
         # player()'s nav fields are the editor's Indoor bake preset.
         obj("Player", [player()], pos=(0.0, 0.5, 2.5)),
-        obj("Moon", [sun(color=(0.5, 0.55, 0.8), intensity=0.35)], rot=LOOK_DOWN_50),
+        obj("Moon", [sun(color=(0.5, 0.55, 0.8), intensity=0.6)], rot=LOOK_DOWN_50),
     ], sceneType="interior", canvases=[dialogue_canvas()], loading="The keep", sky=KEEP_DARK)
 
 
