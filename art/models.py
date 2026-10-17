@@ -473,29 +473,31 @@ def keeper_action(arm, name, frames, keys):
     act.use_fake_user = True
 
 
-def keeper():
+def rigged_figure(name, bones, parts, materials):
+    # An armature of `bones` and a mesh of boxes, each box moved by one bone
+    # alone; returns the armature object, at rest, for the actions.
     reset()
     scene = bpy.context.scene
     scene.render.fps = 24
-    arm_data = bpy.data.armatures.new("keeper_rig")
-    arm = bpy.data.objects.new("keeper_rig", arm_data)
+    arm_data = bpy.data.armatures.new(name + "_rig")
+    arm = bpy.data.objects.new(name + "_rig", arm_data)
     scene.collection.objects.link(arm)
     bpy.context.view_layer.objects.active = arm
     bpy.ops.object.mode_set(mode="EDIT")
-    for name, parent, head, tail in KEEPER_BONES:
-        b = arm_data.edit_bones.new(name)
+    for bname, parent, head, tail in bones:
+        b = arm_data.edit_bones.new(bname)
         b.head, b.tail = head, tail
         if parent:
             b.parent = arm_data.edit_bones[parent]
             b.use_connect = False
     bpy.ops.object.mode_set(mode="OBJECT")
 
-    me = bpy.data.meshes.new("keeper")
+    me = bpy.data.meshes.new(name)
     bm = bmesh.new()
     deform = bm.verts.layers.deform.verify()
-    bone_index = {b[0]: i for i, b in enumerate(KEEPER_BONES)}
-    mat_index = {m[0]: i for i, m in enumerate(KEEPER_MATERIALS)}
-    for bone, mat, c, s in KEEPER_PARTS:
+    bone_index = {b[0]: i for i, b in enumerate(bones)}
+    mat_index = {m[0]: i for i, m in enumerate(materials)}
+    for bone, mat, c, s in parts:
         r = bmesh.ops.create_cube(bm, size=1.0, matrix=mathutils.Matrix.LocRotScale(c, None, s))
         for v in r["verts"]:
             v[deform][bone_index[bone]] = 1.0
@@ -504,22 +506,33 @@ def keeper():
     bm.normal_update()
     bm.to_mesh(me)
     bm.free()
-    for name, color in KEEPER_MATERIALS:
-        m = bpy.data.materials.new(name)
+    for mname, color in materials:
+        m = bpy.data.materials.new(mname)
         m.diffuse_color = color
         # glTF takes the colour from the Principled BSDF.
         bsdf = m.node_tree.nodes.get("Principled BSDF") if m.node_tree else None
         if bsdf:
             bsdf.inputs["Base Color"].default_value = color
         me.materials.append(m)
-    ob = bpy.data.objects.new("keeper", me)
+    ob = bpy.data.objects.new(name, me)
     scene.collection.objects.link(ob)
-    for name, *_ in KEEPER_BONES:
-        ob.vertex_groups.new(name=name)
+    for bname, *_ in bones:
+        ob.vertex_groups.new(name=bname)
     ob.parent = arm
     mod = ob.modifiers.new("rig", "ARMATURE")
     mod.object = arm
+    return arm
 
+
+def export_rigged(name):
+    os.makedirs(OUT, exist_ok=True)
+    bpy.ops.export_scene.gltf(filepath=os.path.join(OUT, name + ".glb"), export_format="GLB",
+                              export_apply=True, export_skins=True, export_animations=True,
+                              export_animation_mode="ACTIONS")
+
+
+def keeper():
+    arm = rigged_figure("keeper", KEEPER_BONES, KEEPER_PARTS, KEEPER_MATERIALS)
     # idle: two seconds of breathing, the head looking slowly about.
     keeper_action(arm, "idle", 48, [
         (1, {}),
@@ -541,10 +554,119 @@ def keeper():
               "head": quat((1, 0, 0), 10)}),
         (24, {"forearm_r": up, "arm_r": quat((1, 0, 0), -50)}),
     ])
-    os.makedirs(OUT, exist_ok=True)
-    bpy.ops.export_scene.gltf(filepath=os.path.join(OUT, "keeper.glb"), export_format="GLB",
-                              export_apply=True, export_skins=True, export_animations=True,
-                              export_animation_mode="ACTIONS")
+    export_rigged("keeper")
+
+
+# The Warden, phase 4: a tall cloaked figure, 2.1 m to the top of the hood,
+# rigged like the keeper (eleven bones under the hips, rigid parts) and built
+# the same way, in Blender's axes facing -Y. Pose rotations are in each
+# bone's own axes: about X, a negative angle swings a hanging bone (an arm
+# or a leg) forward, a positive one tips an upright bone (the spine, chest,
+# head) forward.
+WARDEN_BONES = [
+    ("hips", None, (0, 0, 1.08), (0, 0, 1.25)),
+    ("spine", "hips", (0, 0, 1.25), (0, 0, 1.48)),
+    ("chest", "spine", (0, 0, 1.48), (0, 0, 1.78)),
+    ("head", "chest", (0, 0, 1.78), (0, 0, 2.1)),
+    ("arm_l", "chest", (0.3, 0, 1.72), (0.32, 0, 1.38)),
+    ("forearm_l", "arm_l", (0.32, 0, 1.38), (0.33, -0.04, 1.06)),
+    ("arm_r", "chest", (-0.3, 0, 1.72), (-0.32, 0, 1.38)),
+    ("forearm_r", "arm_r", (-0.32, 0, 1.38), (-0.33, -0.04, 1.06)),
+    ("thigh_l", "hips", (0.12, 0, 1.08), (0.12, 0, 0.56)),
+    ("shin_l", "thigh_l", (0.12, 0, 0.56), (0.12, 0, 0.02)),
+    ("thigh_r", "hips", (-0.12, 0, 1.08), (-0.12, 0, 0.56)),
+    ("shin_r", "thigh_r", (-0.12, 0, 0.56), (-0.12, 0, 0.02)),
+]
+WARDEN_PARTS = [
+    ("hips", "cloak", (0, 0, 1.16), (0.44, 0.28, 0.2)),
+    ("spine", "cloak", (0, 0, 1.37), (0.42, 0.26, 0.26)),
+    ("chest", "cloak", (0, 0, 1.63), (0.58, 0.32, 0.32)),
+    ("head", "mask", (0, -0.03, 1.92), (0.2, 0.2, 0.24)),
+    ("head", "eyes", (0, -0.13, 1.95), (0.16, 0.02, 0.04)),
+    ("head", "hood", (0, 0.03, 1.97), (0.3, 0.28, 0.3)),
+    ("arm_l", "cloak", (0.33, 0, 1.55), (0.14, 0.16, 0.36)),
+    ("forearm_l", "cloak", (0.34, -0.02, 1.24), (0.13, 0.14, 0.3)),
+    ("forearm_l", "mask", (0.34, -0.04, 1.03), (0.09, 0.1, 0.1)),
+    ("arm_r", "cloak", (-0.33, 0, 1.55), (0.14, 0.16, 0.36)),
+    ("forearm_r", "cloak", (-0.34, -0.02, 1.24), (0.13, 0.14, 0.3)),
+    ("forearm_r", "mask", (-0.34, -0.04, 1.03), (0.09, 0.1, 0.1)),
+    ("thigh_l", "cloak", (0.13, 0, 0.82), (0.22, 0.28, 0.52)),
+    ("shin_l", "boots", (0.13, 0, 0.3), (0.2, 0.26, 0.56)),
+    ("thigh_r", "cloak", (-0.13, 0, 0.82), (0.22, 0.28, 0.52)),
+    ("shin_r", "boots", (-0.13, 0, 0.3), (0.2, 0.26, 0.56)),
+]
+WARDEN_MATERIALS = [("cloak", (0.16, 0.17, 0.22, 1.0)), ("hood", (0.1, 0.1, 0.14, 1.0)),
+                    ("mask", (0.78, 0.76, 0.7, 1.0)), ("eyes", (1.0, 0.45, 0.2, 1.0)),
+                    ("boots", (0.08, 0.07, 0.07, 1.0))]
+
+
+def stride(swing, knee, arm, lean):
+    # One pose of a walk cycle, the left leg forward by `swing` degrees and
+    # the right back, the back knee bent by `knee`, the arms swinging the
+    # other way by `arm`, the chest tipped forward by `lean`.
+    x = (1, 0, 0)
+    return {"thigh_l": quat(x, -swing), "shin_l": quat(x, 4), "thigh_r": quat(x, swing),
+            "shin_r": quat(x, knee), "arm_l": quat(x, arm), "arm_r": quat(x, -arm),
+            "chest": quat(x, lean)}
+
+
+def passing(knee, lean):
+    # Mid-stride: the right leg passing under the body, its knee lifted.
+    x = (1, 0, 0)
+    return {"thigh_r": quat(x, -12), "shin_r": quat(x, knee), "thigh_l": quat(x, 4), "chest": quat(x, lean)}
+
+
+def mirrored(pose):
+    swap = {"l": "r", "r": "l"}
+    out = {}
+    for bone, q in pose.items():
+        side = bone.rsplit("_", 1)
+        out[side[0] + "_" + swap[side[1]] if len(side) == 2 and side[1] in swap else bone] = q
+    return out
+
+
+def warden():
+    arm = rigged_figure("warden", WARDEN_BONES, WARDEN_PARTS, WARDEN_MATERIALS)
+    # walk: one second a cycle (two steps) at his patrol pace.
+    a, b = stride(24, 28, 18, 4), passing(42, 4)
+    keeper_action(arm, "walk", 24, [(1, a), (7, b), (13, mirrored(a)), (19, mirrored(b)), (25, a)])
+    # run: two thirds of a second a cycle, longer strides, leaning in.
+    a, b = stride(38, 50, 36, 14), passing(70, 14)
+    keeper_action(arm, "run", 16, [(1, a), (5, b), (9, mirrored(a)), (13, mirrored(b)), (17, a)])
+    # idle: two seconds, the head turning slowly as he watches.
+    keeper_action(arm, "idle", 48, [
+        (1, {}),
+        (16, {"head": quat((0, 0, 1), 25), "chest": quat((1, 0, 0), 2)}),
+        (32, {"head": quat((0, 0, 1), -25), "chest": quat((1, 0, 0), 2)}),
+        (48, {}),
+    ])
+    export_rigged("warden")
+
+
+def box_uv(bm):
+    # One texture repeat per face, so the exporter cuts no triangle.
+    uv = bm.loops.layers.uv.new()
+    for f in bm.faces:
+        axis = max(range(3), key=lambda i: abs(f.normal[i]))
+        a, b = [i for i in range(3) if i != axis]
+        lo = [min(v.co[k] for v in f.verts) for k in (a, b)]
+        hi = [max(v.co[k] for v in f.verts) for k in (a, b)]
+        for l in f.loops:
+            l[uv].uv = ((l.vert.co[a] - lo[0]) / (hi[0] - lo[0]), (l.vert.co[b] - lo[1]) / (hi[1] - lo[1]))
+
+
+def shrine():
+    # A wayside save shrine, phase 4: a stepped stone base, a pillar and a
+    # lantern housing on top, 1.7 m tall, its origin at the foot.
+    reset()
+    bm = bmesh.new()
+    for c, s in [((0, 0, 0.15), (1.0, 1.0, 0.3)), ((0, 0, 0.75), (0.5, 0.5, 0.9)),
+                 ((0, 0, 1.4), (0.8, 0.8, 0.4)), ((0, 0, 1.65), (0.5, 0.5, 0.1))]:
+        bmesh.ops.create_cube(bm, size=1.0, matrix=mathutils.Matrix.LocRotScale(c, None, s))
+    bm.normal_update()
+    box_uv(bm)
+    obj_from_bmesh("shrine", bm)
+    export("shrine")
 
 
 ground()
@@ -555,3 +677,5 @@ valley()
 keep()
 arch()
 keeper()
+warden()
+shrine()

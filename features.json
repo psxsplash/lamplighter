@@ -1,5 +1,5 @@
 {
-  "phase": 3,
+  "phase": 4,
   "features": [
     {"id": "scenes", "phase": 0, "what": "four scenes in the build list", "check": {"kind": "scenes", "min": 4}},
     {"id": "nav", "phase": 0, "what": "navigation regions for the player", "check": {"kind": "stats", "re": "^nav regions=[1-9]"}},
@@ -24,7 +24,9 @@
     {"id": "skin-animation", "phase": 3, "what": "skeletal animation clips", "check": {"kind": "stats", "re": "^skin clip fps="}},
     {"id": "dialogue", "phase": 3, "what": "dialogue text set from Lua", "check": {"kind": "lua", "re": "UI\\.SetText"}},
     {"id": "npc", "phase": 4, "what": "an NPC moved by Lua on the nav mesh", "check": {"kind": "lua", "re": "FindPath"}},
+    {"id": "npc-skin", "phase": 4, "what": "a skinned NPC with animation clips", "check": {"kind": "stats", "re": "^skin bones=[0-9]+ .*clips=[1-9][0-9]* .*Warden$"}},
     {"id": "memcard-save", "phase": 4, "what": "saving the game", "check": {"kind": "lua", "re": "MemCard\\.Save"}},
+    {"id": "memcard-load", "phase": 4, "what": "loading a saved game", "check": {"kind": "lua", "re": "MemCard\\.Load"}},
     {"id": "cutscenes", "phase": 5, "what": "timeline cutscenes", "check": {"kind": "header", "field": "cutsceneCount"}},
     {"id": "animations", "phase": 5, "what": "object animations", "check": {"kind": "header", "field": "animationCount"}}
   ]

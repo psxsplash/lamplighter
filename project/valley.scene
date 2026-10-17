@@ -12141,6 +12141,325 @@
       "children": []
     },
     {
+      "name": "Warden",
+      "active": true,
+      "transform": {
+        "position": [
+          -18.0,
+          0.0,
+          -30.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "components": [
+        {
+          "type": "mesh",
+          "mesh": "models/warden/warden.mesh",
+          "materials": [
+            {
+              "texture": null,
+              "color": [
+                0.16,
+                0.17,
+                0.22,
+                1.0
+              ]
+            },
+            {
+              "texture": null,
+              "color": [
+                0.1,
+                0.1,
+                0.14,
+                1.0
+              ]
+            },
+            {
+              "texture": null,
+              "color": [
+                0.78,
+                0.76,
+                0.7,
+                1.0
+              ]
+            },
+            {
+              "texture": null,
+              "color": [
+                1.0,
+                0.45,
+                0.2,
+                1.0
+              ]
+            },
+            {
+              "texture": null,
+              "color": [
+                0.08,
+                0.07,
+                0.07,
+                1.0
+              ]
+            }
+          ],
+          "bitDepth": 8,
+          "vertexColors": "baked",
+          "flatColor": [
+            128,
+            128,
+            128
+          ],
+          "smoothNormals": true,
+          "uvOffsetMaterial": 0,
+          "dynamicLighting": "auto"
+        },
+        {
+          "type": "script",
+          "lua": "scripts/warden.lua"
+        },
+        {
+          "type": "skin",
+          "clips": [
+            "models/warden/walk.anim",
+            "models/warden/run.anim",
+            "models/warden/idle.anim"
+          ],
+          "fps": 15
+        }
+      ],
+      "children": []
+    },
+    {
+      "name": "Shrine 1",
+      "active": true,
+      "transform": {
+        "position": [
+          7.0,
+          -0.2,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "components": [
+        {
+          "type": "mesh",
+          "mesh": "models/shrine/shrine.mesh",
+          "materials": [
+            {
+              "texture": "textures/stone.png",
+              "color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "bitDepth": 8,
+          "vertexColors": "baked",
+          "flatColor": [
+            128,
+            128,
+            128
+          ],
+          "smoothNormals": true,
+          "uvOffsetMaterial": 0,
+          "dynamicLighting": "auto"
+        },
+        {
+          "type": "collider",
+          "kind": "static",
+          "platform": false
+        },
+        {
+          "type": "script",
+          "lua": "scripts/shrine.lua"
+        },
+        {
+          "type": "interactable",
+          "radius": 4.0,
+          "button": 13,
+          "repeatable": true,
+          "cooldownFrames": 30,
+          "showPrompt": false,
+          "promptCanvas": "",
+          "lineOfSight": false,
+          "facingAngle": 90.0
+        }
+      ],
+      "children": []
+    },
+    {
+      "name": "Shrine 2",
+      "active": true,
+      "transform": {
+        "position": [
+          26.0,
+          -0.2,
+          -44.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "components": [
+        {
+          "type": "mesh",
+          "mesh": "models/shrine/shrine.mesh",
+          "materials": [
+            {
+              "texture": "textures/stone.png",
+              "color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "bitDepth": 8,
+          "vertexColors": "baked",
+          "flatColor": [
+            128,
+            128,
+            128
+          ],
+          "smoothNormals": true,
+          "uvOffsetMaterial": 0,
+          "dynamicLighting": "auto"
+        },
+        {
+          "type": "collider",
+          "kind": "static",
+          "platform": false
+        },
+        {
+          "type": "script",
+          "lua": "scripts/shrine.lua"
+        },
+        {
+          "type": "interactable",
+          "radius": 4.0,
+          "button": 13,
+          "repeatable": true,
+          "cooldownFrames": 30,
+          "showPrompt": false,
+          "promptCanvas": "",
+          "lineOfSight": false,
+          "facingAngle": 90.0
+        }
+      ],
+      "children": []
+    },
+    {
+      "name": "Shrine 1_light",
+      "active": true,
+      "transform": {
+        "position": [
+          7.0,
+          1.2,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "components": [
+        {
+          "type": "light",
+          "kind": "point",
+          "color": [
+            0.6,
+            0.75,
+            1.0
+          ],
+          "intensity": 1.2,
+          "range": 5.0,
+          "spotAngle": 30.0,
+          "innerSpotAngle": 0.0,
+          "enabled": true,
+          "runtime": true
+        }
+      ],
+      "children": []
+    },
+    {
+      "name": "Shrine 2_light",
+      "active": true,
+      "transform": {
+        "position": [
+          26.0,
+          1.2,
+          -44.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "components": [
+        {
+          "type": "light",
+          "kind": "point",
+          "color": [
+            0.6,
+            0.75,
+            1.0
+          ],
+          "intensity": 1.2,
+          "range": 5.0,
+          "spotAngle": 30.0,
+          "innerSpotAngle": 0.0,
+          "enabled": true,
+          "runtime": true
+        }
+      ],
+      "children": []
+    },
+    {
       "name": "Player",
       "active": true,
       "transform": {
@@ -12173,10 +12492,10 @@
           "navCellSize": 0.08,
           "navCellHeight": 0.04,
           "navMinRegionArea": 4,
-          "navMergeRegionArea": 6,
-          "navMaxSimplifyError": 0.4,
-          "navMaxEdgeLength": 5.0,
-          "navPartitionMethod": "monotone",
+          "navMergeRegionArea": 400,
+          "navMaxSimplifyError": 3.0,
+          "navMaxEdgeLength": 40.0,
+          "navPartitionMethod": "watershed",
           "navDetailSampleDist": 4.0,
           "navDetailMaxError": 0.02,
           "navMaxPlaneError": 0.1,
@@ -12339,6 +12658,40 @@
     }
   ],
   "canvases": [
+    {
+      "name": "Shrine",
+      "visible": true,
+      "sortOrder": 10,
+      "defaultFont": null,
+      "elements": [
+        {
+          "type": "text",
+          "name": "saved",
+          "visible": false,
+          "rect": [
+            40,
+            200,
+            240,
+            10
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "color": [
+            0.82,
+            0.84,
+            0.9
+          ],
+          "text": "",
+          "font": null
+        }
+      ]
+    },
     {
       "name": "Loading",
       "visible": true,

@@ -6,10 +6,13 @@
 -- Game state lives in Persist, which keeps numbers across Scene.Load:
 --   beacons  bit mask of the relit beacons (1, 2, 4)
 --   lamp     1 once the lighthouse lamp is lit
---   lost     1 when the player fell off a cliff: the title shows "lost"
+--   lost     1 when the player fell off a cliff: the title shows "lost";
+--            2 when the Warden caught the player (scripts/warden.lua): "caught"
 --   keeper   1 once the keep's keeper has been heard out (scripts/keeper.lua)
--- A save is the table {scene = <index>, beacons = <mask>, lamp = <0 or 1>}
--- under SAVE_KEY on the card in port 0.
+--   shrine   the save shrine to start at in the valley (scripts/valley.lua)
+-- A save is the table {scene = <index>, beacons = <mask>, lamp = <0 or 1>,
+-- keeper = <0 or 1>, shrine = <1 or 2>} under SAVE_KEY on the card in port 0,
+-- made at a shrine (scripts/shrine.lua).
 
 local SAVE_KEY = "LAMP"
 local VALLEY = 1
@@ -60,6 +63,7 @@ local function resetState()
     setBeacons(0)
     Persist.Set("lamp", 0)
     Persist.Set("keeper", 0)
+    Persist.Set("shrine", 0)
 end
 
 function onCreate(self)
@@ -73,11 +77,15 @@ function onCreate(self)
     save = MemCard.Load(0, SAVE_KEY)
     if type(save) ~= "table" or save.scene == nil then save = nil end
     UI.SetVisible(continue, save ~= nil)
-    -- Back from a fall off a cliff (scripts/fall.lua): say so, once.
-    if Persist.Get("lost") == 1 then
+    -- Back from a fall off a cliff (scripts/fall.lua) or caught by the
+    -- Warden (scripts/warden.lua): say so, once.
+    local lost = Persist.Get("lost")
+    if lost == 1 then
         UI.SetVisible(UI.FindElement(canvas, "lost"), true)
-        Persist.Set("lost", 0)
+    elseif lost == 2 then
+        UI.SetVisible(UI.FindElement(canvas, "caught"), true)
     end
+    Persist.Set("lost", 0)
     show()
     Audio.PlayCDDA(2)
 end
@@ -98,6 +106,8 @@ function onButtonPress(self, button)
             resetState()
             setBeacons(save.beacons or 0)
             Persist.Set("lamp", save.lamp or 0)
+            Persist.Set("keeper", save.keeper or 0)
+            Persist.Set("shrine", save.shrine or 0)
             Scene.Load(save.scene)
         end
     end
