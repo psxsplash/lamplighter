@@ -1,4 +1,5 @@
-# Procedural 64x64 textures, deterministic (fixed seeds).
+# Procedural 64x64 textures and the 16x16 memory card icon, deterministic
+# (fixed seeds).
 #   python3 -P art/textures.py <outdir>
 import os
 import random
@@ -26,11 +27,65 @@ def noise_tile(seed, base, spread, size=64, cell=8):
     return img
 
 
+def sea_tile(seed, size=64):
+    # Dark water: the noise squashed into horizontal streaks, with a few
+    # brighter crests.
+    img = noise_tile(seed, (26, 38, 62), 34, size=size).resize((size, size // 8)).resize(
+        (size, size), Image.BILINEAR)
+    rnd = random.Random(seed)
+    px = img.load()
+    for _ in range(18):
+        x, y, n = rnd.randrange(size), rnd.randrange(size), rnd.randrange(3, 9)
+        for i in range(n):
+            r, g, b = px[(x + i) % size, y]
+            px[(x + i) % size, y] = (r + 22, g + 28, b + 34)
+    return img
+
+
+# The memory card icon, 16 x 16 and one 16-colour palette: a lit beacon on a
+# night sky. One character per pixel, keyed into ICON_COLOURS.
+ICON = [
+    "................",
+    "......ffff......",
+    ".....fFFFFf.....",
+    "....fFYYYYFf....",
+    "....fFYWWYFf....",
+    ".....fFYYFf.....",
+    "......ffff......",
+    ".....cccccc.....",
+    "......ssss......",
+    "......sSSs......",
+    "......ssss......",
+    "......sSSs......",
+    ".....ssssss.....",
+    "....rrrrrrrr....",
+    "...rrRRRRRRrr...",
+    "..rrrrrrrrrrrr..",
+]
+ICON_COLOURS = {
+    ".": (12, 16, 40, 255), "f": (160, 56, 16, 255), "F": (232, 120, 24, 255),
+    "Y": (252, 200, 64, 255), "W": (255, 248, 200, 255), "c": (96, 92, 88, 255),
+    "s": (120, 116, 108, 255), "S": (84, 80, 76, 255), "r": (52, 56, 64, 255),
+    "R": (76, 80, 92, 255),
+}
+
+
+def icon():
+    img = Image.new("RGBA", (16, 16))
+    for y, row in enumerate(ICON):
+        for x, ch in enumerate(row):
+            img.putpixel((x, y), ICON_COLOURS[ch])
+    return img
+
+
 def main():
     out = sys.argv[1]
     os.makedirs(out, exist_ok=True)
     noise_tile(1, (88, 104, 72), 70).save(os.path.join(out, "grass.png"))
     noise_tile(2, (120, 116, 108), 80).save(os.path.join(out, "stone.png"))
+    noise_tile(3, (70, 72, 82), 64).save(os.path.join(out, "rock.png"))
+    sea_tile(4).save(os.path.join(out, "sea.png"))
+    icon().save(os.path.join(out, "icon.png"))
 
 
 main()
