@@ -1,0 +1,53 @@
+name: Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# The editor and engine revisions the game is checked against. Bump both
+# together when the game starts using something newer.
+env:
+  EDITOR_REF: fb7a9497c3187c847a8621aa5d1e2855578331a5
+  ENGINE_REF: f67120222d5501d53e21254fafebf0c4ff98f66a
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: psxsplash/splashedit-ng
+          ref: ${{ env.EDITOR_REF }}
+          path: editor
+      - uses: actions/checkout@v4
+        with:
+          repository: psxsplash/psxsplash
+          ref: ${{ env.ENGINE_REF }}
+          path: engine
+          submodules: recursive
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++-mipsel-linux-gnu ninja-build libx11-dev libxext-dev libxrandr-dev \
+            libxcursor-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev libwayland-dev wayland-protocols \
+            libegl1-mesa-dev libgl1-mesa-dev python3-pil
+      - name: Engine
+        run: make -C engine -j4 LOADER=cdrom PREFIX=mipsel-linux-gnu FORMAT=elf32-tradlittlemips
+      - name: splashpack-cli
+        run: |
+          cmake -S editor -B editor/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_DISABLE_FIND_PACKAGE_SDL3=ON -DCMAKE_DISABLE_FIND_PACKAGE_Freetype=ON
+          cmake --build editor/build --target splashpack-cli
+      - name: Scenes match tools/scenes.py
+        run: |
+          mkdir -p /tmp/gen
+          cp -R project/. /tmp/gen/
+          python3 tools/scenes.py /tmp/gen
+          for s in /tmp/gen/*.scene; do editor/build/cli/splashpack-cli resave "$s" "$s"; done
+          diff -r project /tmp/gen
+      - name: Features
+        run: |
+          python3 tests/featurecheck_selftest.py editor editor/build/cli/splashpack-cli engine/psxsplash.ps-exe
+          python3 tests/featurecheck.py editor editor/build/cli/splashpack-cli engine/psxsplash.ps-exe
