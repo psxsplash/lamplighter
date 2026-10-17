@@ -7,6 +7,7 @@
 --   beacons  bit mask of the relit beacons (1, 2, 4)
 --   lamp     1 once the lighthouse lamp is lit
 --   lost     1 when the player fell off a cliff: the title shows "lost"
+--   keeper   1 once the keep's keeper has been heard out (scripts/keeper.lua)
 -- A save is the table {scene = <index>, beacons = <mask>, lamp = <0 or 1>}
 -- under SAVE_KEY on the card in port 0.
 
@@ -58,6 +59,7 @@ end
 local function resetState()
     setBeacons(0)
     Persist.Set("lamp", 0)
+    Persist.Set("keeper", 0)
 end
 
 function onCreate(self)

@@ -7,6 +7,7 @@ import sys
 
 import bpy
 import bmesh
+import mathutils
 
 OUT = sys.argv[sys.argv.index("--") + 1]
 
@@ -261,8 +262,296 @@ def valley():
     export("valley")
 
 
+
+# The keep, phase 3: three rooms indoors, in scene coordinates like the
+# valley. The hall (x -4..3.9, z 0..11.9) has the way out in its south wall,
+# a doorway north into the keeper's study (z 12.1..20) and one east into the
+# side chamber (x 4.1..10, z 3..9). The walls between rooms are 0.2 m thick,
+# each side a face of the room it looks into, and the doorways are 2 m wide
+# and 2.6 m tall with their reveals in the hall. Every quad is 4 m or less
+# (8 m quads did not draw in pcsx-redux) and takes one texture repeat per
+# 4 m, so no quad's UVs cross a repeat.
+KEEP_H = 3.5          # floor to ceiling
+KEEP_DOOR_W = 2.0
+KEEP_DOOR_H = 2.6
+KEEP_TILE = 4.0
+
+
+def keep_quad(bm, uv, corners, normal):
+    # corners in scene coordinates; normal the side it faces, in scene axes.
+    verts = [scene_vert(bm, *c) for c in corners]
+    f = bm.faces.new(verts)
+    f.normal_update()
+    want = (-normal[0], -normal[2], normal[1])  # the same direction in Blender's axes
+    if f.normal.x * want[0] + f.normal.y * want[1] + f.normal.z * want[2] < 0:
+        f.normal_flip()
+    axis = max(range(3), key=lambda i: abs(normal[i]))
+    a, b = [i for i in range(3) if i != axis]
+    lo_a = min(c[a] for c in corners)
+    lo_b = min(c[b] for c in corners)
+    for l in f.loops:
+        # Back from Blender's axes to the scene's for the UV.
+        co = l.vert.co
+        sc = (-co.x, co.z, -co.y)
+        l[uv].uv = ((sc[a] - lo_a) / KEEP_TILE, (sc[b] - lo_b) / KEEP_TILE)
+
+
+def split(lo, hi):
+    # lo..hi in pieces of at most KEEP_TILE.
+    n = max(1, math.ceil((hi - lo) / KEEP_TILE - 1e-6))
+    return [(lo + (hi - lo) * i / n, lo + (hi - lo) * (i + 1) / n) for i in range(n)]
+
+
+def keep_floor(bm, uv, x0, x1, z0, z1):
+    for a0, a1 in split(x0, x1):
+        for b0, b1 in split(z0, z1):
+            keep_quad(bm, uv, [(a0, 0, b0), (a1, 0, b0), (a1, 0, b1), (a0, 0, b1)], (0, 1, 0))
+            keep_quad(bm, uv, [(a0, KEEP_H, b0), (a1, KEEP_H, b0), (a1, KEEP_H, b1), (a0, KEEP_H, b1)],
+                      (0, -1, 0))
+
+
+def keep_wall(bm, uv, axis, at, lo, hi, normal, door=None):
+    # A wall in the plane x = at (axis 0) or z = at (axis 2), running lo..hi
+    # along the other axis, with an optional doorway centred on `door`.
+    def pt(t, y):
+        return (at, y, t) if axis == 0 else (t, y, at)
+
+    def panel(t0, t1, y0, y1):
+        for a0, a1 in split(t0, t1):
+            for b0, b1 in split(y0, y1):
+                keep_quad(bm, uv, [pt(a0, b0), pt(a1, b0), pt(a1, b1), pt(a0, b1)], normal)
+
+    if door is None:
+        panel(lo, hi, 0.0, KEEP_H)
+        return
+    d0, d1 = door - KEEP_DOOR_W / 2, door + KEEP_DOOR_W / 2
+    panel(lo, d0, 0.0, KEEP_H)
+    panel(d1, hi, 0.0, KEEP_H)
+    panel(d0, d1, KEEP_DOOR_H, KEEP_H)
+
+
+def keep_reveal(bm, uv, axis, a0, a1, door):
+    # The doorway's inside faces through a wall from a0 to a1 (along `axis`).
+    d0, d1 = door - KEEP_DOOR_W / 2, door + KEEP_DOOR_W / 2
+    if axis == 2:  # the wall lies along x, the reveal runs along z
+        keep_quad(bm, uv, [(d0, 0, a0), (d0, 0, a1), (d0, KEEP_DOOR_H, a1), (d0, KEEP_DOOR_H, a0)], (1, 0, 0))
+        keep_quad(bm, uv, [(d1, 0, a0), (d1, 0, a1), (d1, KEEP_DOOR_H, a1), (d1, KEEP_DOOR_H, a0)], (-1, 0, 0))
+        keep_quad(bm, uv, [(d0, KEEP_DOOR_H, a0), (d1, KEEP_DOOR_H, a0), (d1, KEEP_DOOR_H, a1),
+                           (d0, KEEP_DOOR_H, a1)], (0, -1, 0))
+        keep_quad(bm, uv, [(d0, 0, a0), (d1, 0, a0), (d1, 0, a1), (d0, 0, a1)], (0, 1, 0))
+    else:
+        keep_quad(bm, uv, [(a0, 0, d0), (a1, 0, d0), (a1, KEEP_DOOR_H, d0), (a0, KEEP_DOOR_H, d0)], (0, 0, 1))
+        keep_quad(bm, uv, [(a0, 0, d1), (a1, 0, d1), (a1, KEEP_DOOR_H, d1), (a0, KEEP_DOOR_H, d1)], (0, 0, -1))
+        keep_quad(bm, uv, [(a0, KEEP_DOOR_H, d0), (a1, KEEP_DOOR_H, d0), (a1, KEEP_DOOR_H, d1),
+                           (a0, KEEP_DOOR_H, d1)], (0, -1, 0))
+        keep_quad(bm, uv, [(a0, 0, d0), (a1, 0, d0), (a1, 0, d1), (a0, 0, d1)], (0, 1, 0))
+
+
+def keep_room(name, build):
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new()
+    build(bm, uv)
+    obj_from_bmesh(name, bm)
+
+
+def keep():
+    # One glTF of three nodes at the world origin: hall, study, chamber.
+    reset()
+
+    def hall(bm, uv):
+        keep_floor(bm, uv, -4.0, 3.9, 0.0, 11.9)
+        keep_wall(bm, uv, 2, 0.0, -4.0, 3.9, (0, 0, 1), door=0.0)      # south, the way out
+        keep_wall(bm, uv, 2, 11.9, -4.0, 3.9, (0, 0, -1), door=0.0)    # north, to the study
+        keep_wall(bm, uv, 0, -4.0, 0.0, 11.9, (1, 0, 0))               # west
+        keep_wall(bm, uv, 0, 3.9, 0.0, 11.9, (-1, 0, 0), door=6.0)     # east, to the chamber
+        keep_reveal(bm, uv, 2, 11.9, 12.1, 0.0)
+        keep_reveal(bm, uv, 0, 3.9, 4.1, 6.0)
+
+    def study(bm, uv):
+        keep_floor(bm, uv, -4.0, 4.0, 12.1, 20.0)
+        keep_wall(bm, uv, 2, 12.1, -4.0, 4.0, (0, 0, 1), door=0.0)
+        keep_wall(bm, uv, 2, 20.0, -4.0, 4.0, (0, 0, -1))
+        keep_wall(bm, uv, 0, -4.0, 12.1, 20.0, (1, 0, 0))
+        keep_wall(bm, uv, 0, 4.0, 12.1, 20.0, (-1, 0, 0))
+
+    def chamber(bm, uv):
+        keep_floor(bm, uv, 4.1, 10.0, 3.0, 9.0)
+        keep_wall(bm, uv, 0, 4.1, 3.0, 9.0, (1, 0, 0), door=6.0)
+        keep_wall(bm, uv, 0, 10.0, 3.0, 9.0, (-1, 0, 0))
+        keep_wall(bm, uv, 2, 3.0, 4.1, 10.0, (0, 0, 1))
+        keep_wall(bm, uv, 2, 9.0, 4.1, 10.0, (0, 0, -1))
+
+    keep_room("hall", hall)
+    keep_room("study", study)
+    keep_room("chamber", chamber)
+    export("keep")
+
+
+def arch():
+    # The keep's door in the valley: two stone posts 2.8 m tall and a lintel,
+    # 2 m clear between the posts, which stand along Blender's Y (the scene's
+    # z), so the way through runs along x.
+    reset()
+    bm = bmesh.new()
+    for y in (-1.2, 1.2):
+        bmesh.ops.create_cube(bm, size=1.0, matrix=mathutils.Matrix.LocRotScale(
+            (0, y, 1.4), None, (0.5, 0.4, 2.8)))
+    bmesh.ops.create_cube(bm, size=1.0, matrix=mathutils.Matrix.LocRotScale(
+        (0, 0, 3.0), None, (0.6, 2.9, 0.4)))
+    bm.normal_update()
+    # One texture repeat per face, so the exporter cuts no triangle.
+    uv = bm.loops.layers.uv.new()
+    for f in bm.faces:
+        axis = max(range(3), key=lambda i: abs(f.normal[i]))
+        a, b = [i for i in range(3) if i != axis]
+        lo = [min(v.co[k] for v in f.verts) for k in (a, b)]
+        hi = [max(v.co[k] for v in f.verts) for k in (a, b)]
+        for l in f.loops:
+            l[uv].uv = ((l.vert.co[a] - lo[0]) / (hi[0] - lo[0]), (l.vert.co[b] - lo[1]) / (hi[1] - lo[1]))
+    obj_from_bmesh("arch", bm)
+    export("arch")
+
+
+# The keeper: a robed figure 1.75 m tall, rigged with eleven bones, every
+# vertex moved by one bone (rigid parts, as PS1 characters were). Built in
+# Blender's axes, facing -Y, which comes into the scene facing +z.
+KEEPER_BONES = [
+    # name, parent, head, tail
+    ("hips", None, (0, 0, 0.9), (0, 0, 1.05)),
+    ("spine", "hips", (0, 0, 1.05), (0, 0, 1.25)),
+    ("chest", "spine", (0, 0, 1.25), (0, 0, 1.5)),
+    ("head", "chest", (0, 0, 1.5), (0, 0, 1.78)),
+    ("arm_l", "chest", (0.24, 0, 1.46), (0.26, 0, 1.18)),
+    ("forearm_l", "arm_l", (0.26, 0, 1.18), (0.27, -0.04, 0.92)),
+    ("arm_r", "chest", (-0.24, 0, 1.46), (-0.26, 0, 1.18)),
+    ("forearm_r", "arm_r", (-0.26, 0, 1.18), (-0.27, -0.04, 0.92)),
+    ("thigh_l", "hips", (0.1, 0, 0.9), (0.1, 0, 0.48)),
+    ("shin_l", "thigh_l", (0.1, 0, 0.48), (0.1, 0, 0.02)),
+    ("thigh_r", "hips", (-0.1, 0, 0.9), (-0.1, 0, 0.48)),
+    ("shin_r", "thigh_r", (-0.1, 0, 0.48), (-0.1, 0, 0.02)),
+]
+# Boxes: bone, material, centre, size.
+KEEPER_PARTS = [
+    ("hips", "robe", (0, 0, 0.97), (0.38, 0.24, 0.16)),
+    ("spine", "robe", (0, 0, 1.15), (0.36, 0.22, 0.22)),
+    ("chest", "robe", (0, 0, 1.37), (0.44, 0.26, 0.26)),
+    ("head", "skin", (0, -0.01, 1.64), (0.2, 0.22, 0.24)),
+    ("head", "hood", (0, 0.03, 1.68), (0.26, 0.24, 0.24)),
+    ("arm_l", "robe", (0.27, 0, 1.32), (0.12, 0.14, 0.3)),
+    ("forearm_l", "robe", (0.28, -0.02, 1.06), (0.11, 0.12, 0.26)),
+    ("forearm_l", "skin", (0.28, -0.04, 0.89), (0.08, 0.09, 0.09)),
+    ("arm_r", "robe", (-0.27, 0, 1.32), (0.12, 0.14, 0.3)),
+    ("forearm_r", "robe", (-0.28, -0.02, 1.06), (0.11, 0.12, 0.26)),
+    ("forearm_r", "skin", (-0.28, -0.04, 0.89), (0.08, 0.09, 0.09)),
+    ("thigh_l", "robe", (0.11, 0, 0.69), (0.2, 0.26, 0.42)),
+    ("shin_l", "robe", (0.12, 0, 0.26), (0.22, 0.28, 0.46)),
+    ("thigh_r", "robe", (-0.11, 0, 0.69), (0.2, 0.26, 0.42)),
+    ("shin_r", "robe", (-0.12, 0, 0.26), (0.22, 0.28, 0.46)),
+]
+KEEPER_MATERIALS = [("robe", (0.55, 0.32, 0.22, 1.0)), ("hood", (0.38, 0.22, 0.16, 1.0)),
+                    ("skin", (0.85, 0.66, 0.52, 1.0))]
+
+
+def quat(axis, deg):
+    return mathutils.Quaternion(axis, math.radians(deg))
+
+
+def keeper_action(arm, name, frames, keys):
+    # keys: frame -> {bone: quaternion}; bones not given stay at rest.
+    arm.animation_data_create()
+    act = bpy.data.actions.new(name)
+    arm.animation_data.action = act
+    for f, pose in keys:
+        for pb in arm.pose.bones:
+            pb.rotation_mode = "QUATERNION"
+            pb.rotation_quaternion = pose.get(pb.name, mathutils.Quaternion())
+            pb.keyframe_insert("rotation_quaternion", frame=f)
+    track = arm.animation_data.nla_tracks.new()
+    track.name = name
+    track.strips.new(name, 1, act)
+    arm.animation_data.action = None
+    act.use_fake_user = True
+
+
+def keeper():
+    reset()
+    scene = bpy.context.scene
+    scene.render.fps = 24
+    arm_data = bpy.data.armatures.new("keeper_rig")
+    arm = bpy.data.objects.new("keeper_rig", arm_data)
+    scene.collection.objects.link(arm)
+    bpy.context.view_layer.objects.active = arm
+    bpy.ops.object.mode_set(mode="EDIT")
+    for name, parent, head, tail in KEEPER_BONES:
+        b = arm_data.edit_bones.new(name)
+        b.head, b.tail = head, tail
+        if parent:
+            b.parent = arm_data.edit_bones[parent]
+            b.use_connect = False
+    bpy.ops.object.mode_set(mode="OBJECT")
+
+    me = bpy.data.meshes.new("keeper")
+    bm = bmesh.new()
+    deform = bm.verts.layers.deform.verify()
+    bone_index = {b[0]: i for i, b in enumerate(KEEPER_BONES)}
+    mat_index = {m[0]: i for i, m in enumerate(KEEPER_MATERIALS)}
+    for bone, mat, c, s in KEEPER_PARTS:
+        r = bmesh.ops.create_cube(bm, size=1.0, matrix=mathutils.Matrix.LocRotScale(c, None, s))
+        for v in r["verts"]:
+            v[deform][bone_index[bone]] = 1.0
+        for f in {f for v in r["verts"] for f in v.link_faces}:
+            f.material_index = mat_index[mat]
+    bm.normal_update()
+    bm.to_mesh(me)
+    bm.free()
+    for name, color in KEEPER_MATERIALS:
+        m = bpy.data.materials.new(name)
+        m.diffuse_color = color
+        # glTF takes the colour from the Principled BSDF.
+        bsdf = m.node_tree.nodes.get("Principled BSDF") if m.node_tree else None
+        if bsdf:
+            bsdf.inputs["Base Color"].default_value = color
+        me.materials.append(m)
+    ob = bpy.data.objects.new("keeper", me)
+    scene.collection.objects.link(ob)
+    for name, *_ in KEEPER_BONES:
+        ob.vertex_groups.new(name=name)
+    ob.parent = arm
+    mod = ob.modifiers.new("rig", "ARMATURE")
+    mod.object = arm
+
+    # idle: two seconds of breathing, the head looking slowly about.
+    keeper_action(arm, "idle", 48, [
+        (1, {}),
+        (12, {"chest": quat((1, 0, 0), 3), "head": quat((0, 0, 1), 12)}),
+        (24, {"chest": quat((1, 0, 0), 0), "arm_l": quat((0, 1, 0), 4), "arm_r": quat((0, 1, 0), -4)}),
+        (36, {"chest": quat((1, 0, 0), 3), "head": quat((0, 0, 1), -12)}),
+        (48, {}),
+    ])
+    # talk: one second, the head nodding and the right forearm raised and
+    # waving as the keeper speaks.
+    up = quat((1, 0, 0), -70)
+    keeper_action(arm, "talk", 24, [
+        (1, {"forearm_r": up, "arm_r": quat((1, 0, 0), -50)}),
+        (6, {"forearm_r": quat((1, 0, 0), -85) @ quat((0, 1, 0), 20), "arm_r": quat((1, 0, 0), -60),
+             "head": quat((1, 0, 0), 10)}),
+        (12, {"forearm_r": up, "arm_r": quat((1, 0, 0), -50), "head": quat((1, 0, 0), -4),
+              "chest": quat((0, 0, 1), 5)}),
+        (18, {"forearm_r": quat((1, 0, 0), -85) @ quat((0, 1, 0), -20), "arm_r": quat((1, 0, 0), -60),
+              "head": quat((1, 0, 0), 10)}),
+        (24, {"forearm_r": up, "arm_r": quat((1, 0, 0), -50)}),
+    ])
+    os.makedirs(OUT, exist_ok=True)
+    bpy.ops.export_scene.gltf(filepath=os.path.join(OUT, "keeper.glb"), export_format="GLB",
+                              export_apply=True, export_skins=True, export_animations=True,
+                              export_animation_mode="ACTIONS")
+
+
 ground()
 beacon()
 cliff()
 sea()
 valley()
+keep()
+arch()
+keeper()

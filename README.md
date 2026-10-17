@@ -35,7 +35,8 @@ the table `{scene, beacons, lamp}` under the key `LAMP`; the title offers
 Continue only when it finds one. Each beacon also keeps `beacon_<name>` (1 once
 lit), which `beacons.blocks` reads and writes and the title sets from the mask,
 and `lost` is 1 after a fall off the valley's cliff until the title has said
-so. Disc track 2 is the title theme. Track 3 was the valley's, but the valley
+so; `keeper` is 1 once the keep's keeper has been heard out (New game
+clears it). Disc track 2 is the title theme. Track 3 was the valley's, but the valley
 streams its scenery from the disc and psxsplash plays no CD music in a streamed
 scene, so the valley's ambience is a looping SPU clip, `wind`.
 
@@ -48,3 +49,18 @@ to the title. Three beacons, BeaconA (just ahead on the right), BeaconB and
 BeaconC, light with Circle: each has a runtime point light `<name>_light`,
 dark until `beacons.blocks` turns it on, and the chime plays once all three
 are lit.
+The keep's gate stands 5 m to the left of the start; walking through it
+(the `Keep door` trigger) opens the keep.
+
+## The keep
+
+Indoors, not streamed: three rooms, each a Room box, joined by doorways that
+are Portals, so psxsplash draws a room only when the camera's room sees it
+through a portal. The player comes in at the south end of the hall facing
+the doorway north into the keeper's study; the side chamber opens off the
+hall to the east, and the south door (`Way out`) leads back to the valley.
+The keeper is a skinned mesh (`models/keeper`, eleven bones and a root,
+clips `idle` and `talk`) with an Interactable on Circle: `keeper.lua` plays
+idle from the start, shows the hidden `Dialogue` canvas and steps its lines
+one press at a time with the keeper talking, then hides it, goes back to
+idle and sets `keeper` to 1 in `Persist`.
