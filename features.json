@@ -1,0 +1,30 @@
+{
+  "phase": 0,
+  "features": [
+    {"id": "scenes", "phase": 0, "what": "four scenes in the build list", "check": {"kind": "scenes", "min": 4}},
+    {"id": "nav", "phase": 0, "what": "navigation regions for the player", "check": {"kind": "stats", "re": "^nav regions=[1-9]"}},
+    {"id": "scene-switch", "phase": 1, "what": "scripts move between scenes", "check": {"kind": "lua", "re": "Scene\\.Load"}},
+    {"id": "loading-screens", "phase": 1, "what": "a loading screen between scenes", "check": {"kind": "sidecar", "ext": ".loading"}},
+    {"id": "ui", "phase": 1, "what": "UI canvases", "check": {"kind": "header", "field": "uiCanvasCount"}},
+    {"id": "fonts", "phase": 1, "what": "custom UI fonts", "check": {"kind": "header", "field": "uiFontCount"}},
+    {"id": "lua", "phase": 1, "what": "Lua scripts", "check": {"kind": "scene", "re": "\"[^\"]+\\.lua\""}},
+    {"id": "cd-music", "phase": 1, "what": "CD-DA music tracks on the disc", "check": {"kind": "disc", "re": "^track [2-9] lba="}},
+    {"id": "memcard", "phase": 1, "what": "memory card settings", "check": {"kind": "header", "field": "memcardTableOffset"}},
+    {"id": "streaming", "phase": 2, "what": "a streamed outdoor area", "check": {"kind": "stats", "re": "^stream regions=[1-9]"}},
+    {"id": "fog", "phase": 2, "what": "fog", "check": {"kind": "header", "field": "fogEnabled"}},
+    {"id": "walk-off", "phase": 2, "what": "nav edges the player can walk off", "check": {"kind": "stats", "re": "^walkoff zones=[1-9]"}},
+    {"id": "triggers", "phase": 2, "what": "trigger boxes", "check": {"kind": "header", "field": "triggerBoxCount"}},
+    {"id": "interactables", "phase": 2, "what": "interactable objects", "check": {"kind": "header", "field": "interactableCount"}},
+    {"id": "point-lights", "phase": 2, "what": "runtime point lights", "check": {"kind": "header", "field": "lightTableOffset"}},
+    {"id": "sound", "phase": 2, "what": "sound effects", "check": {"kind": "header", "field": "audioClipCount"}},
+    {"id": "blocks", "phase": 2, "what": "blocks scripts", "check": {"kind": "scene", "re": "\"[^\"]+\\.blocks\""}},
+    {"id": "rooms", "phase": 3, "what": "indoor rooms", "check": {"kind": "header", "field": "roomCount"}},
+    {"id": "portals", "phase": 3, "what": "portals between rooms", "check": {"kind": "header", "field": "portalCount"}},
+    {"id": "skins", "phase": 3, "what": "skinned characters", "check": {"kind": "header", "field": "skinnedMeshCount"}},
+    {"id": "skin-animation", "phase": 3, "what": "skeletal animation clips", "check": {"kind": "stats", "re": "^skin clip fps="}},
+    {"id": "npc", "phase": 4, "what": "an NPC moved by Lua on the nav mesh", "check": {"kind": "lua", "re": "FindPath"}},
+    {"id": "memcard-save", "phase": 4, "what": "saving the game", "check": {"kind": "lua", "re": "MemCard"}},
+    {"id": "cutscenes", "phase": 5, "what": "timeline cutscenes", "check": {"kind": "header", "field": "cutsceneCount"}},
+    {"id": "animations", "phase": 5, "what": "object animations", "check": {"kind": "header", "field": "animationCount"}}
+  ]
+}
