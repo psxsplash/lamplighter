@@ -14,7 +14,16 @@
       "density": 5
     },
     "networkId": "",
-    "script": null
+    "script": null,
+    "loadingCanvas": "Loading",
+    "memCard": {
+      "enabled": true,
+      "product": "LAMP-00001",
+      "title": "LAMPLIGHTER",
+      "icons": [
+        "textures/icon.png"
+      ]
+    }
   },
   "objects": [
     {
@@ -183,10 +192,10 @@
           0.0
         ],
         "rotation": [
+          0.4226,
           0.0,
           0.0,
-          0.0,
-          1.0
+          0.9063
         ],
         "scale": [
           1.0,
@@ -212,6 +221,233 @@
         }
       ],
       "children": []
+    }
+  ],
+  "fonts": [
+    {
+      "name": "title",
+      "source": "fonts/EBGaramond12-Bold.ttf",
+      "size": 28
+    },
+    {
+      "name": "menu",
+      "bitmap": "fonts/menu.png",
+      "glyphWidth": 16,
+      "glyphHeight": 24,
+      "advances": [
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12
+      ]
+    }
+  ],
+  "canvases": [
+    {
+      "name": "Loading",
+      "visible": true,
+      "sortOrder": 255,
+      "defaultFont": null,
+      "elements": [
+        {
+          "type": "box",
+          "name": "backdrop",
+          "visible": true,
+          "rect": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            1.0,
+            1.0
+          ],
+          "color": [
+            0.03,
+            0.04,
+            0.09
+          ]
+        },
+        {
+          "type": "text",
+          "name": "name",
+          "visible": true,
+          "rect": [
+            91,
+            84,
+            140,
+            36
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "color": [
+            0.5,
+            0.39,
+            0.21
+          ],
+          "text": "Lamplighter",
+          "font": "title"
+        },
+        {
+          "type": "text",
+          "name": "caption",
+          "visible": true,
+          "rect": [
+            112,
+            124,
+            96,
+            24
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "color": [
+            0.275,
+            0.3,
+            0.375
+          ],
+          "text": "The keep",
+          "font": "menu"
+        },
+        {
+          "type": "progress",
+          "name": "loading",
+          "visible": true,
+          "rect": [
+            80,
+            168,
+            160,
+            6
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "color": [
+            1.0,
+            0.78,
+            0.42
+          ],
+          "background": [
+            0.12,
+            0.13,
+            0.2
+          ],
+          "value": 0
+        }
+      ]
     }
   ]
 }

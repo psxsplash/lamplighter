@@ -7,18 +7,27 @@
     "fog": {
       "enabled": false,
       "color": [
-        0.5,
-        0.5,
-        0.6
+        0.03,
+        0.04,
+        0.1
       ],
       "density": 5
     },
     "networkId": "",
-    "script": null
+    "script": null,
+    "loadingCanvas": "Loading",
+    "memCard": {
+      "enabled": true,
+      "product": "LAMP-00001",
+      "title": "LAMPLIGHTER",
+      "icons": [
+        "textures/icon.png"
+      ]
+    }
   },
   "objects": [
     {
-      "name": "Ground",
+      "name": "Cliff",
       "active": true,
       "transform": {
         "position": [
@@ -28,9 +37,9 @@
         ],
         "rotation": [
           0.0,
+          1.0,
           0.0,
-          0.0,
-          1.0
+          0.0
         ],
         "scale": [
           1.0,
@@ -41,10 +50,10 @@
       "components": [
         {
           "type": "mesh",
-          "mesh": "models/ground.mesh",
+          "mesh": "models/cliff.mesh",
           "materials": [
             {
-              "texture": "textures/stone.png",
+              "texture": "textures/rock.png",
               "color": [
                 1.0,
                 1.0,
@@ -77,9 +86,9 @@
       "active": true,
       "transform": {
         "position": [
+          2.0,
           0.0,
-          0.0,
-          4.0
+          4.8
         ],
         "rotation": [
           0.0,
@@ -128,13 +137,163 @@
       "children": []
     },
     {
+      "name": "Sea",
+      "active": true,
+      "transform": {
+        "position": [
+          0.0,
+          -12.0,
+          40.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "components": [
+        {
+          "type": "mesh",
+          "mesh": "models/sea.mesh",
+          "materials": [
+            {
+              "texture": "textures/sea.png",
+              "color": [
+                0.7,
+                0.75,
+                0.9,
+                1.0
+              ]
+            }
+          ],
+          "bitDepth": 8,
+          "vertexColors": "baked",
+          "flatColor": [
+            128,
+            128,
+            128
+          ],
+          "smoothNormals": true,
+          "uvOffsetMaterial": 0,
+          "dynamicLighting": "auto"
+        }
+      ],
+      "children": []
+    },
+    {
+      "name": "Headland",
+      "active": true,
+      "transform": {
+        "position": [
+          -8.0,
+          0.0,
+          50.0
+        ],
+        "rotation": [
+          0.0,
+          0.2164,
+          0.0,
+          0.9763
+        ],
+        "scale": [
+          2.0,
+          1.0,
+          1.5
+        ]
+      },
+      "components": [
+        {
+          "type": "mesh",
+          "mesh": "models/cliff.mesh",
+          "materials": [
+            {
+              "texture": "textures/rock.png",
+              "color": [
+                0.32,
+                0.32,
+                0.42,
+                1.0
+              ]
+            }
+          ],
+          "bitDepth": 8,
+          "vertexColors": "baked",
+          "flatColor": [
+            128,
+            128,
+            128
+          ],
+          "smoothNormals": true,
+          "uvOffsetMaterial": 0,
+          "dynamicLighting": "auto"
+        }
+      ],
+      "children": []
+    },
+    {
+      "name": "Far beacon",
+      "active": true,
+      "transform": {
+        "position": [
+          -8.0,
+          0.0,
+          52.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.5,
+          1.5,
+          1.5
+        ]
+      },
+      "components": [
+        {
+          "type": "mesh",
+          "mesh": "models/beacon.mesh",
+          "materials": [
+            {
+              "texture": "textures/stone.png",
+              "color": [
+                0.32,
+                0.32,
+                0.42,
+                1.0
+              ]
+            }
+          ],
+          "bitDepth": 8,
+          "vertexColors": "baked",
+          "flatColor": [
+            128,
+            128,
+            128
+          ],
+          "smoothNormals": true,
+          "uvOffsetMaterial": 0,
+          "dynamicLighting": "auto"
+        }
+      ],
+      "children": []
+    },
+    {
       "name": "Player",
       "active": true,
       "transform": {
         "position": [
           0.0,
-          0.0,
-          -5.0
+          0.5,
+          2.0
         ],
         "rotation": [
           0.0,
@@ -174,7 +333,7 @@
       "children": []
     },
     {
-      "name": "Sun",
+      "name": "Menu",
       "active": true,
       "transform": {
         "position": [
@@ -196,14 +355,43 @@
       },
       "components": [
         {
+          "type": "script",
+          "lua": "scripts/title.lua"
+        }
+      ],
+      "children": []
+    },
+    {
+      "name": "Moon",
+      "active": true,
+      "transform": {
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.4226,
+          0.0,
+          0.0,
+          0.9063
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "components": [
+        {
           "type": "light",
           "kind": "directional",
           "color": [
-            1.0,
-            0.95,
-            0.85
+            0.55,
+            0.62,
+            0.9
           ],
-          "intensity": 0.75,
+          "intensity": 0.6,
           "range": 10.0,
           "spotAngle": 30.0,
           "innerSpotAngle": 0.0,
@@ -212,6 +400,371 @@
         }
       ],
       "children": []
+    }
+  ],
+  "fonts": [
+    {
+      "name": "title",
+      "source": "fonts/EBGaramond12-Bold.ttf",
+      "size": 28
+    },
+    {
+      "name": "menu",
+      "bitmap": "fonts/menu.png",
+      "glyphWidth": 16,
+      "glyphHeight": 24,
+      "advances": [
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12
+      ]
+    }
+  ],
+  "canvases": [
+    {
+      "name": "Title",
+      "visible": true,
+      "sortOrder": 0,
+      "defaultFont": null,
+      "elements": [
+        {
+          "type": "text",
+          "name": "title",
+          "visible": true,
+          "rect": [
+            60,
+            30,
+            210,
+            36
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "color": [
+            0.5,
+            0.39,
+            0.21
+          ],
+          "text": "LAMPLIGHTER",
+          "font": "title"
+        },
+        {
+          "type": "text",
+          "name": "tagline",
+          "visible": true,
+          "rect": [
+            84,
+            70,
+            160,
+            10
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "color": [
+            0.55,
+            0.6,
+            0.75
+          ],
+          "text": "Relight the beacons",
+          "font": null
+        },
+        {
+          "type": "text",
+          "name": "newgame",
+          "visible": true,
+          "rect": [
+            112,
+            148,
+            100,
+            24
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "color": [
+            0.41,
+            0.42,
+            0.45
+          ],
+          "text": "New game",
+          "font": "menu"
+        },
+        {
+          "type": "text",
+          "name": "continue",
+          "visible": false,
+          "rect": [
+            112,
+            172,
+            100,
+            24
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "color": [
+            0.41,
+            0.42,
+            0.45
+          ],
+          "text": "Continue",
+          "font": "menu"
+        },
+        {
+          "type": "text",
+          "name": "cursor",
+          "visible": true,
+          "rect": [
+            92,
+            148,
+            16,
+            24
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "color": [
+            0.5,
+            0.39,
+            0.21
+          ],
+          "text": ">",
+          "font": "menu"
+        },
+        {
+          "type": "text",
+          "name": "hint",
+          "visible": true,
+          "rect": [
+            60,
+            222,
+            220,
+            10
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "color": [
+            0.55,
+            0.6,
+            0.75
+          ],
+          "text": "UP/DOWN choose   X select",
+          "font": null
+        }
+      ]
+    },
+    {
+      "name": "Loading",
+      "visible": true,
+      "sortOrder": 255,
+      "defaultFont": null,
+      "elements": [
+        {
+          "type": "box",
+          "name": "backdrop",
+          "visible": true,
+          "rect": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            1.0,
+            1.0
+          ],
+          "color": [
+            0.03,
+            0.04,
+            0.09
+          ]
+        },
+        {
+          "type": "text",
+          "name": "name",
+          "visible": true,
+          "rect": [
+            91,
+            84,
+            140,
+            36
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "color": [
+            0.5,
+            0.39,
+            0.21
+          ],
+          "text": "Lamplighter",
+          "font": "title"
+        },
+        {
+          "type": "progress",
+          "name": "loading",
+          "visible": true,
+          "rect": [
+            80,
+            168,
+            160,
+            6
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "color": [
+            1.0,
+            0.78,
+            0.42
+          ],
+          "background": [
+            0.12,
+            0.13,
+            0.2
+          ],
+          "value": 0
+        }
+      ]
     }
   ]
 }
