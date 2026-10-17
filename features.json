@@ -1,5 +1,5 @@
 {
-  "phase": 1,
+  "phase": 2,
   "features": [
     {"id": "scenes", "phase": 0, "what": "four scenes in the build list", "check": {"kind": "scenes", "min": 4}},
     {"id": "nav", "phase": 0, "what": "navigation regions for the player", "check": {"kind": "stats", "re": "^nav regions=[1-9]"}},

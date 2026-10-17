@@ -1,0 +1,498 @@
+{
+  "format": "splashedit-blocks",
+  "version": 1,
+  "variables": [
+    {
+      "name": "lit",
+      "value": "0"
+    }
+  ],
+  "stacks": [
+    {
+      "x": 40,
+      "y": 40,
+      "blocks": [
+        {
+          "op": "on_create"
+        },
+        {
+          "op": "if",
+          "args": [
+            {
+              "op": "and",
+              "args": [
+                {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "op": "my_name"
+                    },
+                    {
+                      "op": "text",
+                      "field": "BeaconA"
+                    }
+                  ]
+                },
+                {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "op": "remembered",
+                      "field": "beacon_BeaconA"
+                    },
+                    {
+                      "op": "number",
+                      "field": "1"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "bodies": [
+            [
+              {
+                "op": "light_on",
+                "field": "BeaconA_light"
+              }
+            ]
+          ]
+        },
+        {
+          "op": "if",
+          "args": [
+            {
+              "op": "and",
+              "args": [
+                {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "op": "my_name"
+                    },
+                    {
+                      "op": "text",
+                      "field": "BeaconB"
+                    }
+                  ]
+                },
+                {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "op": "remembered",
+                      "field": "beacon_BeaconB"
+                    },
+                    {
+                      "op": "number",
+                      "field": "1"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "bodies": [
+            [
+              {
+                "op": "light_on",
+                "field": "BeaconB_light"
+              }
+            ]
+          ]
+        },
+        {
+          "op": "if",
+          "args": [
+            {
+              "op": "and",
+              "args": [
+                {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "op": "my_name"
+                    },
+                    {
+                      "op": "text",
+                      "field": "BeaconC"
+                    }
+                  ]
+                },
+                {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "op": "remembered",
+                      "field": "beacon_BeaconC"
+                    },
+                    {
+                      "op": "number",
+                      "field": "1"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "bodies": [
+            [
+              {
+                "op": "light_on",
+                "field": "BeaconC_light"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "x": 40,
+      "y": 400,
+      "blocks": [
+        {
+          "op": "on_interact"
+        },
+        {
+          "op": "set_var",
+          "field": "lit",
+          "args": [
+            {
+              "op": "number",
+              "field": "0"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "args": [
+            {
+              "op": "and",
+              "args": [
+                {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "op": "my_name"
+                    },
+                    {
+                      "op": "text",
+                      "field": "BeaconA"
+                    }
+                  ]
+                },
+                {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "op": "remembered",
+                      "field": "beacon_BeaconA"
+                    },
+                    {
+                      "op": "number",
+                      "field": "0"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "bodies": [
+            [
+              {
+                "op": "remember",
+                "field": "beacon_BeaconA",
+                "args": [
+                  {
+                    "op": "number",
+                    "field": "1"
+                  }
+                ]
+              },
+              {
+                "op": "remember",
+                "field": "beacons",
+                "args": [
+                  {
+                    "op": "add",
+                    "args": [
+                      {
+                        "op": "remembered",
+                        "field": "beacons"
+                      },
+                      {
+                        "op": "number",
+                        "field": "1"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "light_on",
+                "field": "BeaconA_light"
+              },
+              {
+                "op": "play_sound",
+                "field": "ignite"
+              },
+              {
+                "op": "set_var",
+                "field": "lit",
+                "args": [
+                  {
+                    "op": "number",
+                    "field": "1"
+                  }
+                ]
+              }
+            ]
+          ]
+        },
+        {
+          "op": "if",
+          "args": [
+            {
+              "op": "and",
+              "args": [
+                {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "op": "my_name"
+                    },
+                    {
+                      "op": "text",
+                      "field": "BeaconB"
+                    }
+                  ]
+                },
+                {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "op": "remembered",
+                      "field": "beacon_BeaconB"
+                    },
+                    {
+                      "op": "number",
+                      "field": "0"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "bodies": [
+            [
+              {
+                "op": "remember",
+                "field": "beacon_BeaconB",
+                "args": [
+                  {
+                    "op": "number",
+                    "field": "1"
+                  }
+                ]
+              },
+              {
+                "op": "remember",
+                "field": "beacons",
+                "args": [
+                  {
+                    "op": "add",
+                    "args": [
+                      {
+                        "op": "remembered",
+                        "field": "beacons"
+                      },
+                      {
+                        "op": "number",
+                        "field": "2"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "light_on",
+                "field": "BeaconB_light"
+              },
+              {
+                "op": "play_sound",
+                "field": "ignite"
+              },
+              {
+                "op": "set_var",
+                "field": "lit",
+                "args": [
+                  {
+                    "op": "number",
+                    "field": "1"
+                  }
+                ]
+              }
+            ]
+          ]
+        },
+        {
+          "op": "if",
+          "args": [
+            {
+              "op": "and",
+              "args": [
+                {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "op": "my_name"
+                    },
+                    {
+                      "op": "text",
+                      "field": "BeaconC"
+                    }
+                  ]
+                },
+                {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "op": "remembered",
+                      "field": "beacon_BeaconC"
+                    },
+                    {
+                      "op": "number",
+                      "field": "0"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "bodies": [
+            [
+              {
+                "op": "remember",
+                "field": "beacon_BeaconC",
+                "args": [
+                  {
+                    "op": "number",
+                    "field": "1"
+                  }
+                ]
+              },
+              {
+                "op": "remember",
+                "field": "beacons",
+                "args": [
+                  {
+                    "op": "add",
+                    "args": [
+                      {
+                        "op": "remembered",
+                        "field": "beacons"
+                      },
+                      {
+                        "op": "number",
+                        "field": "4"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "light_on",
+                "field": "BeaconC_light"
+              },
+              {
+                "op": "play_sound",
+                "field": "ignite"
+              },
+              {
+                "op": "set_var",
+                "field": "lit",
+                "args": [
+                  {
+                    "op": "number",
+                    "field": "1"
+                  }
+                ]
+              }
+            ]
+          ]
+        },
+        {
+          "op": "if",
+          "args": [
+            {
+              "op": "and",
+              "args": [
+                {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "op": "var",
+                      "field": "lit"
+                    },
+                    {
+                      "op": "number",
+                      "field": "1"
+                    }
+                  ]
+                },
+                {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "op": "add",
+                      "args": [
+                        {
+                          "op": "add",
+                          "args": [
+                            {
+                              "op": "remembered",
+                              "field": "beacon_BeaconA"
+                            },
+                            {
+                              "op": "remembered",
+                              "field": "beacon_BeaconB"
+                            }
+                          ]
+                        },
+                        {
+                          "op": "remembered",
+                          "field": "beacon_BeaconC"
+                        }
+                      ]
+                    },
+                    {
+                      "op": "number",
+                      "field": "3"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "bodies": [
+            [
+              {
+                "op": "wait",
+                "args": [
+                  {
+                    "op": "number",
+                    "field": "1"
+                  }
+                ]
+              },
+              {
+                "op": "play_sound",
+                "field": "chime"
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}
