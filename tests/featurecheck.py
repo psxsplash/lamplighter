@@ -30,7 +30,8 @@ def main():
     sys.path.insert(0, os.path.join(editor, "tests"))
     import splashdiff
 
-    spec = json.load(open(os.path.join(ROOT, "features.json")))
+    # FEATURECHECK_FEATURES replaces features.json (the self-test uses it).
+    spec = json.load(open(os.environ.get("FEATURECHECK_FEATURES", os.path.join(ROOT, "features.json"))))
     listing = os.path.join(PROJECT, "scenes.list")
     if os.path.exists(listing):
         scenes = [l.strip() for l in open(listing) if l.strip()]
