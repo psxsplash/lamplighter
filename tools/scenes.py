@@ -98,6 +98,15 @@ TERRAIN_NAV = {"navCellSize": 0.08, "navCellHeight": 0.04, "navMinRegionArea": 4
                "navPartitionMethod": "monotone", "navDetailSampleDist": 4.0,
                "navDetailMaxError": 0.02, "navMaxPlaneError": 0.1}
 
+# The valley's nav, phase 4: the Terrain preset made 2468 regions over the
+# 448 m valley, and psxsplash's Actor.FindPath finds no path at all in a
+# scene of more than 256 (navregion.cpp, NAV_MAX_SEARCH_REGIONS), which the
+# Warden walks by. Watershed regions, simplified harder and allowed longer
+# edges, make under 200 that follow the ground's swells as closely as the
+# preset's long monotone strips did.
+VALLEY_NAV = dict(TERRAIN_NAV, navPartitionMethod="watershed", navMaxSimplifyError=3.0,
+                  navMaxEdgeLength=40.0, navMergeRegionArea=400)
+
 
 def interactable(radius, button, repeatable=True):
     # button is a pad bit: 13 Circle, 14 Cross (which also jumps).
@@ -188,6 +197,8 @@ def title_canvas():
         text("tagline", "Relight the beacons", 84, 70, 160, 10, DIM),
         # Shown by title.lua after a fall off the valley's cliffs.
         text("lost", "You fell from the cliff edge", 48, 104, 230, 10, AMBER, visible=False),
+        # Shown by title.lua after the Warden caught the player (scripts/warden.lua).
+        text("caught", "The Warden caught you", 76, 104, 180, 10, AMBER, visible=False),
         text("newgame", "New game", 112, 148, 100, 24, PALE, font="menu"),
         text("continue", "Continue", 112, 172, 100, 24, PALE, font="menu", visible=False),
         text("cursor", ">", 92, 148, 16, 24, AMBER, font="menu"),
@@ -276,6 +287,52 @@ def beacon_light(name, pos):
     return obj(name + "_light", [lamp(EMBER, 2.0, 9.0)], pos=(pos[0], pos[1] + 2.9, pos[2]))
 
 
+# The Warden, phase 4: models/warden, a skinned mesh with the clips walk,
+# run and idle (SkinnedAnim.Play("Warden", ...)). scripts/warden.lua walks
+# him round his patrol on the nav regions and chases a player who comes
+# near; he starts at its first corner. A script and a skin keep an object
+# out of the streamed regions, so he is always loaded.
+WARDEN_CLIPS = ["models/warden/walk.anim", "models/warden/run.anim", "models/warden/idle.anim"]
+# Cloak, hood, mask, eyes and boots, in the order of the model's materials.
+WARDEN_COLOURS = [(0.16, 0.17, 0.22, 1.0), (0.1, 0.1, 0.14, 1.0), (0.78, 0.76, 0.7, 1.0),
+                  (1.0, 0.45, 0.2, 1.0), (0.08, 0.07, 0.07, 1.0)]
+WARDEN_START = (-18.0, 0.0, -30.0)
+
+# Save shrines, phase 4: name, foot. Circle in reach saves the game
+# (scripts/shrine.lua); Continue on the title puts the player back 3 m in
+# front of the shrine saved at (scripts/valley.lua). Shrine 1 is 7 m to the
+# right of the start, Shrine 2 beyond BeaconC, both clear of the patrol.
+SHRINES = [("Shrine 1", (7.0, -0.2, 0.0)), ("Shrine 2", (26.0, -0.2, -44.0))]
+SHRINE_GLOW = (0.6, 0.75, 1.0)
+
+
+def warden():
+    m = mesh("models/warden/warden.mesh")
+    m["materials"] = [{"texture": None, "color": list(c)} for c in WARDEN_COLOURS]
+    return obj("Warden", [m, skin(WARDEN_CLIPS), script("scripts/warden.lua")], pos=WARDEN_START)
+
+
+def shrine(name, pos):
+    # psxsplash measures the reach from the eyes to the shrine's foot, so
+    # 4 m is about 3.5 m across the ground.
+    return obj(name, [mesh("models/shrine/shrine.mesh", "textures/stone.png"), collider(),
+                      interactable(4.0, 13), script("scripts/shrine.lua")], pos=pos)
+
+
+def shrine_light(name, pos):
+    # A pale lamp in the lantern housing, lit from the start.
+    return obj(name + "_light", [lamp(SHRINE_GLOW, 1.2, 5.0, enabled=True)],
+               pos=(pos[0], pos[1] + 1.4, pos[2]))
+
+
+def shrine_canvas():
+    # shrine.lua shows "saved" for two seconds after a save, or says the
+    # card did not take it.
+    return canvas("Shrine", [
+        text("saved", "", 40, 200, 240, 10, PALE, visible=False),
+    ], sortOrder=10)
+
+
 def valley():
     # Dusk in a fog-bound valley that ends to the north in a cliff over the
     # sea. The player starts 8 m from the rim facing it (+z), BeaconA close
@@ -304,9 +361,13 @@ def valley():
         obj("Keep gate", [mesh("models/arch/arch.mesh", "textures/stone.png")], pos=KEEP_GATE),
         obj("Keep door", [trigger((1.2, 3.0, 2.0), "scripts/keep_door.lua")],
             pos=(KEEP_GATE[0], 1.5, KEEP_GATE[2])),
-        obj("Player", [player(TERRAIN_NAV)], pos=(0.0, 0.5, 0.0)),
+        warden(),
+        *[shrine(n, p) for n, p in SHRINES],
+        *[shrine_light(n, p) for n, p in SHRINES],
+        obj("Player", [player(VALLEY_NAV)], pos=(0.0, 0.5, 0.0)),
         obj("Sun", [sun(color=(0.85, 0.82, 0.9), intensity=0.6)], rot=LOOK_DOWN_50),
-    ], script="scripts/valley.lua", loading="The valley", sky=FOG, fog=10, stream=True)
+    ], script="scripts/valley.lua", canvases=[shrine_canvas()], loading="The valley", sky=FOG, fog=10,
+        stream=True)
 
 
 # Where the keep's gate stands in the valley: left of the start (-x), the
@@ -352,7 +413,8 @@ def skin(clips, fps=15):
 
 
 def keeper():
-    # In the study, turned three quarters to the hall door, so his talking
+    # In the study, 3 m in from the hall door (nearer since phase 4, so he
+    # is larger from the hall), turned three quarters to it, so his talking
     # arm reads in profile. keeper.lua plays idle from the start and talk
     # while the dialogue is up; Circle in reach steps it.
     # psxsplash measures the reach from the eyes to his feet, so 4 m is
@@ -360,7 +422,7 @@ def keeper():
     m = mesh("models/keeper/keeper.mesh")
     m["materials"] = [{"texture": None, "color": list(c)} for c in KEEPER_COLOURS]
     return obj("Keeper", [m, skin(KEEPER_CLIPS), interactable(4.0, 13), script("scripts/keeper.lua")],
-               pos=(0.0, 0.0, 16.5), rot=YAW_145)
+               pos=(0.0, 0.0, 15.0), rot=YAW_145)
 
 
 def dialogue_canvas():
@@ -389,10 +451,11 @@ def keep():
         *portals,
         keeper(),
         obj("Way out", [trigger((2.0, 3.0, 1.0), "scripts/keep_exit.lua")], pos=(0.0, 1.5, 0.5)),
-        # Candles, baked into the walls.
-        obj("Hall candle", [baked_lamp(CANDLE, 2.0, 10.0)], pos=(-2.0, 3.0, 6.0)),
-        obj("Study candle", [baked_lamp(CANDLE, 2.4, 9.0)], pos=(2.0, 3.0, 17.0)),
-        obj("Chamber candle", [baked_lamp(CANDLE, 1.8, 8.0)], pos=(8.0, 3.0, 6.0)),
+        # Candles, baked into the walls (a quarter brighter at phase 4: the
+        # keep read too dark on the console).
+        obj("Hall candle", [baked_lamp(CANDLE, 2.5, 10.0)], pos=(-2.0, 3.0, 6.0)),
+        obj("Study candle", [baked_lamp(CANDLE, 3.0, 9.0)], pos=(2.0, 3.0, 17.0)),
+        obj("Chamber candle", [baked_lamp(CANDLE, 2.2, 8.0)], pos=(8.0, 3.0, 6.0)),
         # Half a metre up: the exporter puts the eyes on the floor below.
         # player()'s nav fields are the editor's Indoor bake preset.
         obj("Player", [player()], pos=(0.0, 0.5, 2.5)),

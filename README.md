@@ -31,12 +31,14 @@ The title font is EB Garamond Bold (SIL Open Font License, see
 Scene 0 is the title, 1 the valley, 2 the keep, 3 the lighthouse. The game
 state crosses scenes in `Persist`: `beacons` (a bit mask of the relit beacons)
 and `lamp` (1 once the lighthouse lamp is lit). A save on the memory card is
-the table `{scene, beacons, lamp}` under the key `LAMP`; the title offers
-Continue only when it finds one. Each beacon also keeps `beacon_<name>` (1 once
+the table `{scene, beacons, lamp, keeper, shrine}` under the key `LAMP`, made
+at one of the valley's save shrines; the title offers Continue only when it
+finds one, and Continue restores `beacons`, `lamp`, `keeper` and `shrine`. Each beacon also keeps `beacon_<name>` (1 once
 lit), which `beacons.blocks` reads and writes and the title sets from the mask,
-and `lost` is 1 after a fall off the valley's cliff until the title has said
-so; `keeper` is 1 once the keep's keeper has been heard out (New game
-clears it). Disc track 2 is the title theme. Track 3 was the valley's, but the valley
+and `lost` is 1 after a fall off the valley's cliff and 2 after the Warden
+caught the player, until the title has said so; `keeper` is 1 once the keep's
+keeper has been heard out; `shrine` (1 or 2) is the shrine a continued game
+starts at, cleared once the valley has used it (New game clears both). Disc track 2 is the title theme. Track 3 was the valley's, but the valley
 streams its scenery from the disc and psxsplash plays no CD music in a streamed
 scene, so the valley's ambience is a looping SPU clip, `wind`.
 
@@ -52,6 +54,26 @@ are lit.
 The keep's gate stands 5 m to the left of the start; walking through it
 (the `Keep door` trigger) opens the keep.
 
+The Warden (`models/warden`, eleven bones and a root, clips `walk`, `run` and
+`idle`) walks a patrol of four corners south of the start, round between
+BeaconB and BeaconC, at 1.4 m/s, each leg a path from `Actor.FindPath`, and
+waits a moment at each corner (`warden.lua`). Come within 10 m and he runs at
+you at 2.6 m/s, finding a new path to you every 20 frames; you walk at 3 m/s,
+so walking away loses him once you are 16 m off for two seconds, and he goes
+back to the nearest corner. Within 1.4 m he catches you and the title says
+so. A script and a skin keep him out of the streamed regions. The valley's
+nav is baked as watershed regions, 182 of them: psxsplash's pathfinding
+finds no path in a scene of more than 256.
+
+Two save shrines, `Shrine 1` 7 m to the right of the start and `Shrine 2`
+beyond BeaconC, each with a pale runtime light, save the game with Circle
+(`shrine.lua`) and say so on screen for two seconds. Continue starts the
+player 3 m in front of the shrine saved at, facing it (`valley.lua`).
+
+Known issue (psxsplash f671202): after a save at a shrine, a later scene
+load in the same session can crash the console; a save made in a scene
+that does not stream, or a Continue from a fresh boot, does not.
+
 ## The keep
 
 Indoors, not streamed: three rooms, each a Room box, joined by doorways that
@@ -60,7 +82,7 @@ through a portal. The player comes in at the south end of the hall facing
 the doorway north into the keeper's study; the side chamber opens off the
 hall to the east, and the south door (`Way out`) leads back to the valley.
 The keeper is a skinned mesh (`models/keeper`, eleven bones and a root,
-clips `idle` and `talk`) with an Interactable on Circle: `keeper.lua` plays
+clips `idle` and `talk`), 3 m in from the doorway, with an Interactable on Circle: `keeper.lua` plays
 idle from the start, shows the hidden `Dialogue` canvas and steps its lines
 one press at a time with the keeper talking, then hides it, goes back to
 idle and sets `keeper` to 1 in `Persist`.

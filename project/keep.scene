@@ -301,7 +301,7 @@
         "position": [
           0.0,
           0.0,
-          16.5
+          15.0
         ],
         "rotation": [
           0.0,
@@ -449,7 +449,7 @@
             0.72,
             0.4
           ],
-          "intensity": 2.0,
+          "intensity": 2.5,
           "range": 10.0,
           "spotAngle": 30.0,
           "innerSpotAngle": 0.0,
@@ -489,7 +489,7 @@
             0.72,
             0.4
           ],
-          "intensity": 2.4,
+          "intensity": 3.0,
           "range": 9.0,
           "spotAngle": 30.0,
           "innerSpotAngle": 0.0,
@@ -529,7 +529,7 @@
             0.72,
             0.4
           ],
-          "intensity": 1.8,
+          "intensity": 2.2,
           "range": 8.0,
           "spotAngle": 30.0,
           "innerSpotAngle": 0.0,
