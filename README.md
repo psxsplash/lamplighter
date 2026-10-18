@@ -86,6 +86,16 @@ beyond BeaconC, each with a pale runtime light, save the game with Circle
 (`shrine.lua`) and say so on screen for two seconds. Continue starts the
 player 3 m in front of the shrine saved at, facing it (`valley.lua`).
 
+A tally of the beacons sits in the top right corner: three lanterns, BeaconA
+to BeaconC from the left, drawn as Lua sprites from the `lantern` sprite
+sheet (`textures/lantern.png`, five 16 x 16 cells from `art/textures.py`: one
+unlit, four of flame). An unlit beacon's lantern shows `dark`, a lit one's
+plays `flame`, a looping flicker. The valley's scene script gets no
+`onUpdate`, so `valley.lua` is also the script of the `Tally` object, whose
+`onUpdate` watches `beacons` and relights the tally when it changes. The title
+scene carries the same sheet, without animations, for its menu cursor: a UI
+image showing the unlit lantern, cell 0.
+
 Known issue (psxsplash f671202): after a save at a shrine, a later scene
 load in the same session can crash the console; a save made in a scene
 that does not stream, or a Continue from a fresh boot, does not.
@@ -112,8 +122,7 @@ Circle at the lens (`lighthouse.lua`) lights it: `lamp` is set to 1 in
 `Persist`, the `lens` animation turns the lens once every three seconds
 (`Animation.Play`), and the `finale` cutscene pulls the camera back over the
 parapet and once round the tower while the runtime light `Lamp light` comes
-up from a red glow to a warm white and the pad rumbles. Then the `credits`
-cutscene scrolls the `Credits` canvas up the screen, and the title says "The
-valley is lit again". The credits start on the frame after the finale ends:
-psxsplash f671202 drops the `onComplete` of a cutscene played from inside
-another's `onComplete`.
+up from a red glow to a warm white and the pad rumbles. The finale's
+`onComplete` plays the `credits` cutscene, which scrolls the `Credits` canvas
+up the screen; its own `onComplete` goes back to the title, which says "The
+valley is lit again".

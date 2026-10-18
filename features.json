@@ -1,5 +1,5 @@
 {
-  "phase": 6,
+  "phase": 7,
   "features": [
     {"id": "scenes", "phase": 0, "what": "four scenes in the build list", "check": {"kind": "scenes", "min": 4}},
     {"id": "nav", "phase": 0, "what": "navigation regions for the player", "check": {"kind": "stats", "re": "^nav regions=[1-9]"}},
@@ -36,6 +36,8 @@
     {"id": "cutscene-chain", "phase": 5, "what": "Lua waits for a cutscene to end", "check": {"kind": "lua", "re": "Cutscene\\.Play\\(.*onComplete"}},
     {"id": "animation-lua", "phase": 5, "what": "Lua starts an object animation", "check": {"kind": "lua", "re": "Animation\\.Play"}},
     {"id": "agents", "phase": 6, "what": "native NPC agents", "check": {"kind": "header", "field": "agentCount"}},
-    {"id": "agent-clips", "phase": 6, "what": "an agent that plays a looping clip per state", "check": {"kind": "agent-clips", "object": "Warden"}}
+    {"id": "agent-clips", "phase": 6, "what": "an agent that plays a looping clip per state", "check": {"kind": "agent-clips", "object": "Warden"}},
+    {"id": "sprites", "phase": 7, "what": "sprite sheets and Lua sprites", "check": {"kind": "header", "field": "spriteAnimCount"}},
+    {"id": "ui-sprite", "phase": 7, "what": "a UI image showing a sprite sheet cell", "check": {"kind": "stats", "re": "^ui image sheet=lantern cell=\\d+ Title/cursor$"}}
   ]
 }

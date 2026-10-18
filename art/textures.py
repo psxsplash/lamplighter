@@ -1,5 +1,5 @@
-# Procedural 64x64 textures and the 16x16 memory card icon, deterministic
-# (fixed seeds).
+# Procedural 64x64 textures, the 16x16 memory card icon and the lantern
+# sprite sheet, deterministic (fixed seeds).
 #   python3 -P art/textures.py <outdir>
 import os
 import random
@@ -78,6 +78,56 @@ def icon():
     return img
 
 
+# The lantern sprite sheet, five 16 x 16 cells in a row and one 16-colour
+# palette: cell 0 an unlit lantern, cells 1-4 the same lantern lit, its flame
+# flickering. The valley's beacon tally plays them (`dark`, `flame`) and the
+# title's menu cursor shows cell 0 (tools/scenes.py). "." is transparent; the
+# dark outline "o" keeps the grey frame readable on the valley's grey fog.
+LANTERN = [
+    "......oooo......",
+    ".....oRRRRo.....",
+    ".....oRooRo.....",
+    "....ooRRRRoo....",
+    "...orRRRRRRro...",
+    "..orRRRRRRRRro..",
+    "..oR########Ro..",
+    "..oR########Ro..",
+    "..oR########Ro..",
+    "..oR########Ro..",
+    "..oR########Ro..",
+    "..oR########Ro..",
+    "..oR########Ro..",
+    "..orRRRRRRRRro..",
+    "...orRRRRRRro...",
+    "....oooooooo....",
+]
+# What fills the glass (the "#" block, 8 x 7): dark glass with a glint, then
+# the flame in four shapes over a red glow.
+LANTERN_GLASS = [
+    ["gggggggg", "hggggggg", "hggggggg", "hggggggg", "gggggggg", "gggggggg", "gggggggg"],
+    ["ffffffff", "fffFffff", "ffFYFfff", "ffFYYFff", "fFYWWYFf", "fFYWWYFf", "ffFYYFff"],
+    ["ffffFfff", "ffffFfff", "fffFYFff", "ffFYYFff", "ffFYWYFf", "fFYWWYFf", "ffFYYFff"],
+    ["ffffffff", "ffffffff", "fffFFfff", "ffFYYFff", "fFYWWYFf", "fFYWWYFf", "ffFYYFff"],
+    ["fffFffff", "fffFffff", "ffFYFfff", "ffFYYFff", "fFYWYFff", "fFYWWYFf", "ffFYYFff"],
+]
+LANTERN_COLOURS = {
+    ".": (0, 0, 0, 0), "o": (24, 22, 30, 255), "r": (84, 80, 76, 255), "R": (132, 126, 116, 255),
+    "g": (36, 44, 70, 255), "h": (110, 124, 160, 255), "f": (120, 44, 14, 255),
+    "F": (232, 120, 24, 255), "Y": (252, 200, 64, 255), "W": (255, 248, 200, 255),
+}
+
+
+def lantern_sheet():
+    img = Image.new("RGBA", (16 * len(LANTERN_GLASS), 16))
+    for cell, glass in enumerate(LANTERN_GLASS):
+        for y, row in enumerate(LANTERN):
+            for x, ch in enumerate(row):
+                if ch == "#":
+                    ch = glass[y - 6][x - 4]
+                img.putpixel((16 * cell + x, y), LANTERN_COLOURS[ch])
+    return img
+
+
 def main():
     out = sys.argv[1]
     os.makedirs(out, exist_ok=True)
@@ -86,6 +136,7 @@ def main():
     noise_tile(3, (70, 72, 82), 64).save(os.path.join(out, "rock.png"))
     sea_tile(4).save(os.path.join(out, "sea.png"))
     icon().save(os.path.join(out, "icon.png"))
+    lantern_sheet().save(os.path.join(out, "lantern.png"))
 
 
 main()

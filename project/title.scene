@@ -514,6 +514,16 @@
       ]
     }
   ],
+  "spriteSheets": [
+    {
+      "name": "lantern",
+      "texture": "textures/lantern.png",
+      "bitDepth": 4,
+      "cellWidth": 16,
+      "cellHeight": 16,
+      "anims": []
+    }
+  ],
   "canvases": [
     {
       "name": "Title",
@@ -704,14 +714,14 @@
           "font": "menu"
         },
         {
-          "type": "text",
+          "type": "image",
           "name": "cursor",
           "visible": true,
           "rect": [
             92,
-            148,
+            152,
             16,
-            24
+            16
           ],
           "anchorMin": [
             0.0,
@@ -723,11 +733,14 @@
           ],
           "color": [
             0.5,
-            0.39,
-            0.21
+            0.5,
+            0.5
           ],
-          "text": ">",
-          "font": "menu"
+          "texture": null,
+          "bitDepth": 4,
+          "cutout": true,
+          "sheet": "lantern",
+          "cell": 0
         },
         {
           "type": "text",

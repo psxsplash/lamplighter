@@ -19,7 +19,10 @@
 
 local SAVE_KEY = "LAMP"
 local VALLEY = 1
+-- The cursor is a UI image, the unlit lantern of the `lantern` sprite sheet
+-- (16 x 16), centred on the 24-pixel line of the item it points at.
 local CURSOR_X = 92
+local CURSOR_DY = 4
 -- Menu text colours, halved: custom-font text is drawn as textured sprites,
 -- where 128 is full intensity (tools/scenes.py stores them the same way).
 local PICKED = {128, 100, 54}
@@ -41,7 +44,7 @@ local function show()
     if choice == 2 then picked, other = continue, newGame end
     UI.SetColor(picked, PICKED[1], PICKED[2], PICKED[3])
     UI.SetColor(other, IDLE[1], IDLE[2], IDLE[3])
-    UI.SetPosition(cursor, CURSOR_X, itemY(choice))
+    UI.SetPosition(cursor, CURSOR_X, itemY(choice) + CURSOR_DY)
 end
 
 -- The valley's beacons script (beacons.blocks) also keeps one key per beacon,

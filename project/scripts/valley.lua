@@ -10,6 +10,15 @@
 --
 -- A New game clears `intro` (title.lua), and the valley then plays the
 -- `intro` cutscene once: a sweep from the cliff rim over the dark beacons.
+--
+-- The same file is the script of the `Tally` object, which draws the beacon
+-- tally: three lanterns of the `lantern` sprite sheet in the top right
+-- corner, BeaconA to BeaconC left to right. A lit beacon's lantern plays
+-- `flame`, an unlit one shows `dark`. A scene script gets no onUpdate, so the
+-- object's onUpdate watches `beacons` (bits 1, 2, 4, set by beacons.blocks)
+-- and relights the tally when it changes. The scene and the object each run
+-- this file in an environment of their own: the scene uses
+-- onSceneCreationEnd, the object onCreate and onUpdate.
 
 -- In front of each shrine (tools/scenes.py SHRINES), in GTE raw units: one
 -- metre is 4096 / 100 at the valley's GTE scaling, y points down, and the
@@ -31,4 +40,35 @@ function onSceneCreationEnd()
         Controls.SetEnabledPlayer1(false)
         Cutscene.Play("intro", {onComplete = function() Controls.SetEnabledPlayer1(true) end})
     end
+end
+
+-- The tally (the Tally object). Screen pixels, each lantern 16 x 16.
+local TALLY_X, TALLY_Y, TALLY_STEP = 258, 10, 18
+local BITS = {1, 2, 4}   -- BeaconA, BeaconB, BeaconC in `beacons`
+local lanterns = {}
+local shown = -1   -- the `beacons` mask the tally shows
+
+local function showTally(mask)
+    shown = mask
+    for i = 1, 3 do
+        local bit = BITS[i]
+        if mask % (2 * bit) >= bit then
+            Sprite.PlayAnim(lanterns[i], "flame")
+        else
+            Sprite.PlayAnim(lanterns[i], "dark")
+        end
+    end
+end
+
+function onCreate(self)
+    for i = 1, 3 do
+        lanterns[i] = Sprite.Create("lantern")
+        Sprite.SetPos(lanterns[i], TALLY_X + (i - 1) * TALLY_STEP, TALLY_Y)
+    end
+    showTally(Persist.Get("beacons") or 0)
+end
+
+function onUpdate(self, dt)
+    local mask = Persist.Get("beacons") or 0
+    if mask ~= shown then showTally(mask) end
 end
