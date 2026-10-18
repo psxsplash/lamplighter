@@ -112,8 +112,7 @@ Circle at the lens (`lighthouse.lua`) lights it: `lamp` is set to 1 in
 `Persist`, the `lens` animation turns the lens once every three seconds
 (`Animation.Play`), and the `finale` cutscene pulls the camera back over the
 parapet and once round the tower while the runtime light `Lamp light` comes
-up from a red glow to a warm white and the pad rumbles. Then the `credits`
-cutscene scrolls the `Credits` canvas up the screen, and the title says "The
-valley is lit again". The credits start on the frame after the finale ends:
-psxsplash f671202 drops the `onComplete` of a cutscene played from inside
-another's `onComplete`.
+up from a red glow to a warm white and the pad rumbles. The finale's
+`onComplete` plays the `credits` cutscene, which scrolls the `Credits` canvas
+up the screen; its own `onComplete` goes back to the title, which says "The
+valley is lit again".
