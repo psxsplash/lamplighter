@@ -5,7 +5,8 @@
 -- is chased: he runs, finding a new path to the player every REPATH, until
 -- the player is more than LOSE away for LOSE_TIME, when he goes back to the
 -- nearest corner of his patrol. Within CATCH he has caught the player:
---   lost  2 in Persist, and back to the title, which says so (title.lua)
+--   lost  2 in Persist, the `gameover` cutscene ("Caught by the Warden"), and
+--   back to the title, which says so (title.lua)
 --
 -- psxsplash's Lua has whole numbers only. Positions are in GTE units, 4096
 -- to the unit, one unit 100 m at the valley's GTE scaling of 100, with y
@@ -156,6 +157,16 @@ function onCreate(self)
     play("idle")
 end
 
+-- Caught: hold the player and play the `gameover` cutscene, the fog going
+-- to black with the line; the title follows when it ends.
+local function gameOver(s)
+    Controls.SetEnabledPlayer1(false)
+    local line = UI.FindElement(UI.FindCanvas("Gameover"), "line")
+    UI.SetText(line, s)
+    UI.SetPosition(line, 160 - 4 * #s, 116)
+    Cutscene.Play("gameover", {onComplete = function() Scene.Load(0) end})
+end
+
 function onUpdate(self, dt)
     if state == "caught" then return end
     local eye = Player.GetPosition()
@@ -166,7 +177,7 @@ function onUpdate(self, dt)
         state = "caught"
         play("idle")
         Persist.Set("lost", 2)
-        Scene.Load(0)
+        gameOver("Caught by the Warden")
         return
     end
 

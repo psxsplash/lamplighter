@@ -1,5 +1,5 @@
 {
-  "phase": 4,
+  "phase": 5,
   "features": [
     {"id": "scenes", "phase": 0, "what": "four scenes in the build list", "check": {"kind": "scenes", "min": 4}},
     {"id": "nav", "phase": 0, "what": "navigation regions for the player", "check": {"kind": "stats", "re": "^nav regions=[1-9]"}},
@@ -28,6 +28,12 @@
     {"id": "memcard-save", "phase": 4, "what": "saving the game", "check": {"kind": "lua", "re": "MemCard\\.Save"}},
     {"id": "memcard-load", "phase": 4, "what": "loading a saved game", "check": {"kind": "lua", "re": "MemCard\\.Load"}},
     {"id": "cutscenes", "phase": 5, "what": "timeline cutscenes", "check": {"kind": "header", "field": "cutsceneCount"}},
-    {"id": "animations", "phase": 5, "what": "object animations", "check": {"kind": "header", "field": "animationCount"}}
+    {"id": "animations", "phase": 5, "what": "object animations", "check": {"kind": "header", "field": "animationCount"}},
+    {"id": "cutscene-camera", "phase": 5, "what": "a cutscene that moves the camera", "check": {"kind": "scene", "re": "\"type\": \"cameraPosition\""}},
+    {"id": "cutscene-ui", "phase": 5, "what": "a cutscene that fades UI colours", "check": {"kind": "scene", "re": "\"type\": \"uiColor\""}},
+    {"id": "cutscene-light", "phase": 5, "what": "a cutscene that ramps a runtime light", "check": {"kind": "scene", "re": "\"type\": \"lightIntensity\""}},
+    {"id": "rumble", "phase": 5, "what": "pad vibration from a cutscene", "check": {"kind": "scene", "re": "\"type\": \"rumble(Small|Large)\""}},
+    {"id": "cutscene-chain", "phase": 5, "what": "Lua waits for a cutscene to end", "check": {"kind": "lua", "re": "Cutscene\\.Play\\(.*onComplete"}},
+    {"id": "animation-lua", "phase": 5, "what": "Lua starts an object animation", "check": {"kind": "lua", "re": "Animation\\.Play"}}
   ]
 }

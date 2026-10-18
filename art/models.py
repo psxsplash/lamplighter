@@ -669,6 +669,79 @@ def shrine():
     export("shrine")
 
 
+# The lighthouse, phase 5: one glTF of two nodes, "tower" at the world
+# origin, the gallery floor's top at 0, and "lens" about its own centre,
+# which the scene sets on the pedestal and turns (an Animation). The tower
+# rises 24 m from the sea in bands of white and red stone; the gallery, 8 m
+# across, has a parapet, the lamp's pedestal in the middle and four posts
+# holding the lantern roof. Coordinates are Blender's, z up.
+LIGHTHOUSE_MATERIALS = [("white", (0.86, 0.85, 0.8, 1.0)), ("red", (0.62, 0.16, 0.12, 1.0)),
+                        ("iron", (0.18, 0.18, 0.2, 1.0))]
+LENS_MATERIALS = [("glass", (1.0, 0.86, 0.5, 1.0)), ("brass", (0.45, 0.33, 0.14, 1.0))]
+
+
+def add_materials(ob, materials):
+    for mname, color in materials:
+        m = bpy.data.materials.new(mname)
+        m.diffuse_color = color
+        # glTF takes the colour from the Principled BSDF.
+        bsdf = m.node_tree.nodes.get("Principled BSDF") if m.node_tree else None
+        if bsdf:
+            bsdf.inputs["Base Color"].default_value = color
+        ob.data.materials.append(m)
+
+
+def prism(bm, sides, r0, r1, z0, z1, mat):
+    # A closed `sides`-gon frustum from radius r0 at z0 to r1 at z1.
+    r = bmesh.ops.create_cone(bm, cap_ends=True, segments=sides, radius1=r0, radius2=r1,
+                              depth=z1 - z0, matrix=mathutils.Matrix.Translation((0, 0, (z0 + z1) / 2)))
+    for f in {f for v in r["verts"] for f in v.link_faces}:
+        f.material_index = mat
+
+
+def block(bm, centre, size, yaw, mat):
+    r = bmesh.ops.create_cube(bm, size=1.0, matrix=mathutils.Matrix.LocRotScale(
+        centre, mathutils.Euler((0, 0, yaw)), size))
+    for f in {f for v in r["verts"] for f in v.link_faces}:
+        f.material_index = mat
+
+
+def lighthouse():
+    reset()
+    bm = bmesh.new()
+    # Six 4 m bands, tapering from 3 m to 2.2 m, white and red in turn.
+    for i in range(6):
+        z0 = -24.0 + 4.0 * i
+        z1 = z0 + 4.0 if i < 5 else -0.3
+        prism(bm, 8, 3.0 - 0.8 * i / 6, 3.0 - 0.8 * (i + 1) / 6, z0, z1, i % 2)
+    prism(bm, 8, 4.0, 4.0, -0.3, 0.0, 2)                 # the gallery floor
+    apothem = 3.85 * math.cos(math.pi / 8)
+    for k in range(8):                                    # its parapet, one wall an edge
+        a = (k + 0.5) * math.pi / 4
+        block(bm, (apothem * math.cos(a), apothem * math.sin(a), 0.5),
+              (0.12, 2 * 3.85 * math.sin(math.pi / 8), 1.0), a, 2)
+    prism(bm, 8, 0.9, 0.8, 0.0, 0.9, 0)                  # the lamp's pedestal
+    for k in range(4):                                    # the lantern posts
+        a = (k + 0.5) * math.pi / 2
+        block(bm, (1.3 * math.cos(a), 1.3 * math.sin(a), 1.85), (0.14, 0.14, 1.9), a, 2)
+    prism(bm, 8, 1.7, 0.2, 2.8, 3.8, 1)                  # the lantern roof
+    bm.normal_update()
+    box_uv(bm)
+    add_materials(obj_from_bmesh("tower", bm), LIGHTHOUSE_MATERIALS)
+
+    # The lens: a square drum 1 m tall, glass on two opposite sides and
+    # brass on the others, so its turning shows.
+    bm = bmesh.new()
+    block(bm, (0, 0, 0), (0.9, 0.9, 1.0), 0.0, 1)
+    bm.normal_update()
+    for f in bm.faces:
+        if abs(f.normal.x) > 0.9:
+            f.material_index = 0
+    box_uv(bm)
+    add_materials(obj_from_bmesh("lens", bm), LENS_MATERIALS)
+    export("lighthouse")
+
+
 ground()
 beacon()
 cliff()
@@ -679,3 +752,4 @@ arch()
 keeper()
 warden()
 shrine()
+lighthouse()
