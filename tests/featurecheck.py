@@ -56,6 +56,30 @@ def main():
         for blob in p.lua:
             lua.append(blob.decode("latin-1") if isinstance(blob, bytes) else str(blob))
 
+    # The agent on `obj` plays a clip in at least one state it stays in
+    # (Idle, Patrol, Seek, Flee, Wander), and every such clip loops; a clip
+    # that plays once stops on its last frame. Read from the --stats lines
+    # `agent ... clips=State:index,... <obj>` and `skin clip ... loop=0|1 <obj>/<clip>`.
+    def agent_clips(obj):
+        held = {"Idle", "Patrol", "Seek", "Flee", "Wander"}
+        agent = re.compile(r"^agent object=\d+ .*\bclips=(\S+) " + re.escape(obj) + "$")
+        clip = re.compile(r"^skin clip .*\bloop=([01]) " + re.escape(obj) + "/(.+)$")
+        states = None
+        for l in stats:
+            m = agent.match(l)
+            if m:
+                states = [] if m.group(1) == "-" else [x.split(":") for x in m.group(1).split(",")]
+        if states is None:
+            return False, f"no agent on {obj}"
+        clips = [(m.group(2), m.group(1) == "1") for m in map(clip.match, stats) if m]
+        used = [(s, int(i)) for s, i in states if s in held]
+        if not used:
+            return False, f"{obj}: no clip in a held state"
+        once = [f"{s}:{clips[i][0]}" for s, i in used if i >= len(clips) or not clips[i][1]]
+        if once:
+            return False, f"{obj}: plays once in {','.join(once)}"
+        return True, f"{obj}: " + ",".join(f"{s}:{clips[i][0]}" for s, i in used)
+
     def lines_match(lines, pat):
         r = re.compile(pat)
         return any(r.search(l) for l in lines)
@@ -77,6 +101,8 @@ def main():
             return lines_match(texts, c["re"]), c["re"]
         if k == "sidecar":
             return c["ext"] in sidecars, f"{c['ext']} beside a pack"
+        if k == "agent-clips":
+            return agent_clips(c["object"])
         sys.exit(f"featurecheck: unknown check kind {k}")
 
     phase = int(os.environ.get("FEATURECHECK_PHASE", spec["phase"]))

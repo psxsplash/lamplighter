@@ -3,7 +3,7 @@
   "version": 1,
   "name": "idle",
   "length": 2.0,
-  "loop": false,
+  "loop": true,
   "channels": [
     {
       "joint": "hips",

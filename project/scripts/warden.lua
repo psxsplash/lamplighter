@@ -1,8 +1,10 @@
 -- The Warden in the valley (scene 1), on the Warden object: a skinned mesh
 -- with the clips "walk", "run" and "idle", and psxsplash's agent component
 -- (tools/scenes.py). The engine walks him round the four corners of his
--- patrol on the nav regions, turns him the way he goes, and watches for the
--- player, 10 m all round. This script says what he does about it:
+-- patrol on the nav regions, turns him the way he goes, plays the clip for
+-- the state he is in (idle standing, walk on patrol, run chasing; they
+-- loop), and watches for the player, 10 m all round. This script says what
+-- he does about it:
 --   he sees the player: he runs at him (Seek, the engine finding the way
 --   and following the player as he moves)
 --   60 updates without seeing him (the agent's alert timeout, which counts
@@ -12,9 +14,6 @@
 --   within CATCH he has caught the player: lost 2 in Persist, the
 --   `gameover` cutscene ("Caught by the Warden"), and back to the title,
 --   which says so (title.lua)
--- The skin's clips do not loop, so the clip for each state is played from
--- here, looping, and not by the agent.
---
 -- psxsplash's Lua has whole numbers only. Positions are in GTE units, 4096
 -- to the unit, one unit 100 m at the valley's GTE scaling of 100, with y
 -- pointing down: a metre is 40.96 (written raw below, from metres * 4096 /
@@ -27,11 +26,9 @@
 -- not get away from him; a sprinting one does. onUpdate's dt is 4096 a
 -- thirtieth of a second.
 
-local NAME = "Warden"
 local function raw(dm) return dm * 4096 / 1000 end  -- decimetres to GTE raw
 
 local IDLE, PATROL, SEEK = 0, 1, 2  -- the agent states he uses
-local CLIPS = {[IDLE] = "idle", [PATROL] = "walk", [SEEK] = "run"}
 local WALK = 2             -- 1.46 m/s, raw a frame (the component's speed)
 local RUN = 3              -- 2.20 m/s
 local CATCH = raw(14)      -- 1.4 m across the ground: caught
@@ -56,12 +53,6 @@ end
 function onCreate(self)
     -- psxsplash gives every scripted object an actor id: self is an actor.
     actor = self
-    SkinnedAnim.Play(NAME, "idle", {loop = true})
-end
-
-function onStateEnter(self, state, old)
-    local clip = CLIPS[state]
-    if clip then SkinnedAnim.Play(NAME, clip, {loop = true}) end
 end
 
 function onTargetSeen(self, target)

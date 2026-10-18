@@ -70,12 +70,12 @@ The keep's gate stands 5 m to the left of the start; walking through it
 (the `Keep door` trigger) opens the keep.
 
 The Warden (`models/warden`, eleven bones and a root, clips `walk`, `run` and
-`idle`) walks a patrol of four corners south of the start, round between
-BeaconB and BeaconC, at 1.4 m/s, each leg a path from `Actor.FindPath`, and
-waits a moment at each corner (`warden.lua`). Come within 10 m and he runs at
-you at 2.6 m/s, finding a new path to you every 20 frames; you walk at 3 m/s,
-so walking away loses him once you are 16 m off for two seconds, and he goes
-back to the nearest corner. Within 1.4 m he catches you and the title says
+`idle`, all looping) is psxsplash's agent: it walks him round a patrol of
+four corners south of the start, between BeaconB and BeaconC, at 1.46 m/s on
+the nav regions, and plays `idle`, `walk` or `run` for the state he is in.
+`warden.lua` holds the policy: a second and a half's wait at each corner;
+seen within 10 m, all round, he runs at you at 2.2 m/s; unseen for about four
+seconds, he walks on to his next corner. Within 1.4 m he catches you and the title says
 so: the `gameover` cutscene under "Caught by the Warden", then the
 title. A script and a skin keep him out of the streamed regions. The valley's
 nav is baked as watershed regions, 182 of them: psxsplash's pathfinding

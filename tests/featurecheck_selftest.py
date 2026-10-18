@@ -9,6 +9,8 @@
 # 3. On a control project (the editor's third-person template plus a CD-DA
 #    track), every check kind reports a feature it uses as PASS and one it
 #    does not use as FAIL.
+# 4. agent-clips fails on a copy of lamplighter whose Warden walk plays once,
+#    and on one whose agent has no state clips.
 import json
 import math
 import os
@@ -98,6 +100,32 @@ def main():
     check(rc == 1, "control project fails overall")
     check(f"{len(feats)} listed" in out, f"all {len(feats)} control features reported")
     shutil.rmtree(ctl)
+
+    # agent-clips on copies of lamplighter: the Warden's walk made one-shot,
+    # then his state clips taken away; each must FAIL.
+    spec = {"phase": 0, "features": [{"id": "agent-clips", "phase": 0, "what": "",
+                                      "check": {"kind": "agent-clips", "object": "Warden"}}]}
+    for name, edit in (("one-shot walk", "anim"), ("no state clips", "scene")):
+        tmp = tempfile.mkdtemp(prefix="featurecheck-agent-")
+        shutil.copytree(os.path.join(ROOT, "project"), tmp, dirs_exist_ok=True)
+        if edit == "anim":
+            f = os.path.join(tmp, "models", "warden", "walk.anim")
+            a = json.load(open(f))
+            a["loop"] = False
+            json.dump(a, open(f, "w"), indent=2)
+        else:
+            f = os.path.join(tmp, "valley.scene")
+            sc = json.load(open(f))
+            for o in sc["objects"]:
+                for c in o.get("components", []):
+                    if c.get("type") == "agent":
+                        c["stateClips"] = {}
+            json.dump(sc, open(f, "w"), indent=2)
+        sp = os.path.join(tmp, "features-selftest.json")
+        json.dump(spec, open(sp, "w"))
+        rc, out = run(args, FEATURECHECK_PROJECT=tmp, FEATURECHECK_FEATURES=sp)
+        check(rc == 1 and "feature agent-clips FAIL" in out, f"agent-clips: {name} FAILs")
+        shutil.rmtree(tmp)
 
     print(f"featurecheck_selftest: {failures} failures")
     sys.exit(1 if failures else 0)
