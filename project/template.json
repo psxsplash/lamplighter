@@ -1,0 +1,5 @@
+{
+  "name": "Lamplighter",
+  "description": "The sample game: relight three beacons in a fog-bound valley, slip past the Warden, light the lighthouse lamp. Four scenes using streaming, rooms and portals, nav, skinned characters, cutscenes, blocks and Lua, memory card saves and CD music.",
+  "order": 30
+}
