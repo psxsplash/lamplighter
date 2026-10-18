@@ -330,10 +330,10 @@ def beacon_light(name, pos):
 
 # The Warden: models/warden, a skinned mesh with the clips walk, run and
 # idle. psxsplash's agent moves him: round the four corners of his patrol on
-# the nav regions, and after the player once he sees him; scripts/warden.lua
-# says when to chase, give up, pause at a corner, and which clip plays (the
-# clips do not loop, so the agent's per-state clips would stop after one
-# pass). He starts at the first corner. A script, a skin or an agent keeps an
+# the nav regions, and after the player once he sees him, playing idle,
+# walk or run for the state he is in (the clips loop); scripts/warden.lua
+# says when to chase, give up and pause at a corner. He starts at the first
+# corner. A script, a skin or an agent keeps an
 # object out of the streamed regions, so he is always loaded.
 WARDEN_CLIPS = ["models/warden/walk.anim", "models/warden/run.anim", "models/warden/idle.anim"]
 # Cloak, hood, mask, eyes and boots, in the order of the model's materials.
@@ -372,7 +372,9 @@ def warden_agent():
     return {"type": "agent", "startEnabled": True, "moveSpeed": WARDEN_WALK, "stopDistance": 0.5,
             "vision": True, "visionRange": 10.0, "fov": 360.0, "visionRegionDepth": 8,
             "hearingRange": 0.0, "alertTimeout": 60,
-            "waypoints": [[x, WARDEN_START[1], z] for x, z in WARDEN_PATROL], "stateClips": {}}
+            "waypoints": [[x, WARDEN_START[1], z] for x, z in WARDEN_PATROL],
+            # Indices into WARDEN_CLIPS.
+            "stateClips": {"Idle": 2, "Patrol": 0, "Seek": 1}}
 
 
 def shrine(name, pos):

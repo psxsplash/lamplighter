@@ -3,7 +3,7 @@
   "version": 1,
   "name": "walk",
   "length": 1.0416666,
-  "loop": false,
+  "loop": true,
   "channels": [
     {
       "joint": "hips",

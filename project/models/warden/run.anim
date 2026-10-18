@@ -3,7 +3,7 @@
   "version": 1,
   "name": "run",
   "length": 0.7083333,
-  "loop": false,
+  "loop": true,
   "channels": [
     {
       "joint": "hips",

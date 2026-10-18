@@ -12353,7 +12353,11 @@
               -22.0
             ]
           ],
-          "stateClips": {}
+          "stateClips": {
+            "Idle": 2,
+            "Patrol": 0,
+            "Seek": 1
+          }
         }
       ],
       "children": []
