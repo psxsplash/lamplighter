@@ -171,6 +171,13 @@ def progress(name, rect, color, background, value=0):
     return element("progress", name, rect, color, background=list(background), value=value)
 
 
+def sheet_image(name, sheet, cell, x, y):
+    # A UI image showing one 16 x 16 cell of a scene sprite sheet. Textured
+    # UI is drawn at its colour over 128, so the neutral tint is stored halved.
+    return element("image", name, (x, y, 16, 16), [0.5, 0.5, 0.5], texture=None, bitDepth=4,
+                   cutout=True, sheet=sheet, cell=cell)
+
+
 def canvas(name, elements, sortOrder=0, defaultFont=None, visible=True):
     return {"name": name, "visible": visible, "sortOrder": sortOrder, "defaultFont": defaultFont,
             "elements": elements}
@@ -204,7 +211,8 @@ def title_canvas():
         text("lit", "The valley is lit again", 68, 104, 190, 10, AMBER, visible=False),
         text("newgame", "New game", 112, 148, 100, 24, PALE, font="menu"),
         text("continue", "Continue", 112, 172, 100, 24, PALE, font="menu", visible=False),
-        text("cursor", ">", 92, 148, 16, 24, AMBER, font="menu"),
+        # The unlit lantern, cell 0 of the lantern sheet, centred on the item's line.
+        sheet_image("cursor", "lantern", 0, 92, 152),
         text("hint", "UP/DOWN choose   X select", 60, 222, 220, 10, DIM),
     ])
 
@@ -242,8 +250,22 @@ def look(frm, to):
     return pitch, yaw
 
 
+def lantern_sheet(anims=()):
+    # art/textures.py's lantern sheet: cell 0 unlit, cells 1-4 a flickering
+    # flame. `dark` and `flame` are the valley tally's (scripts/valley.lua);
+    # the title only shows cell 0 as its menu cursor and plays none.
+    return {"name": "lantern", "texture": "textures/lantern.png", "bitDepth": 4,
+            "cellWidth": 16, "cellHeight": 16, "anims": list(anims)}
+
+
+def sprite_anim(name, first, count, duration, loop=True):
+    return {"name": name, "firstFrame": first, "frameCount": count, "frameDuration": duration,
+            "loop": loop}
+
+
 def scene(objects, sceneType="exterior", script=None, canvases=(), loading=None,
-          sky=(0.5, 0.5, 0.6), fog=0, stream=False, bump=0, cutscenes=(), animations=()):
+          sky=(0.5, 0.5, 0.6), fog=0, stream=False, bump=0, cutscenes=(), animations=(),
+          spriteSheets=()):
     # psxsplash clears the screen to the fog colour, fog on or off: `sky`.
     # `fog` is the density, 0 for none: the far plane is 20000 / density in
     # screen depth, about 98 m at 5 with this GTE scaling.
@@ -268,6 +290,8 @@ def scene(objects, sceneType="exterior", script=None, canvases=(), loading=None,
         out["cutscenes"] = list(cutscenes)
     if animations:
         out["animations"] = list(animations)
+    if spriteSheets:
+        out["spriteSheets"] = list(spriteSheets)
     return out
 
 
@@ -293,7 +317,8 @@ def title():
         obj("Player", [player()], pos=(0.0, 0.5, 2.0)),
         obj("Menu", [script("scripts/title.lua")]),
         obj("Moon", [moon], rot=LOOK_DOWN_50),
-    ], canvases=[title_canvas()], loading="", sky=(0.03, 0.04, 0.1), bump=RENDER_BUMP)
+    ], canvases=[title_canvas()], loading="", sky=(0.03, 0.04, 0.1), bump=RENDER_BUMP,
+        spriteSheets=[lantern_sheet()])
 
 
 # The valley's terrain: art/models.py builds a 14 x 14 grid of 32 m ground
@@ -525,8 +550,13 @@ def valley():
         *[shrine_light(n, p) for n, p in SHRINES],
         obj("Player", [player(VALLEY_NAV)], pos=(0.0, 0.5, 0.0)),
         obj("Sun", [sun(color=(0.85, 0.82, 0.9), intensity=0.6)], rot=LOOK_DOWN_50),
+        # The beacon tally in the top right corner: valley.lua again, as an
+        # object script, which gets the onUpdate a scene script does not.
+        obj("Tally", [script("scripts/valley.lua")]),
     ], script="scripts/valley.lua", canvases=[shrine_canvas(), story_canvas(), gameover_canvas()],
-        loading="The valley", sky=FOG, fog=10, stream=True, cutscenes=valley_cutscenes())
+        loading="The valley", sky=FOG, fog=10, stream=True, cutscenes=valley_cutscenes(),
+        spriteSheets=[lantern_sheet([sprite_anim("dark", 0, 1, 6, loop=False),
+                                     sprite_anim("flame", 1, 4, 7)])])
 
 
 # Where the keep's gate stands in the valley: left of the start (-x), the

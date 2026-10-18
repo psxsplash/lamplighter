@@ -12667,6 +12667,35 @@
         }
       ],
       "children": []
+    },
+    {
+      "name": "Tally",
+      "active": true,
+      "transform": {
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "components": [
+        {
+          "type": "script",
+          "lua": "scripts/valley.lua"
+        }
+      ],
+      "children": []
     }
   ],
   "fonts": [
@@ -12777,6 +12806,31 @@
         12,
         12,
         12
+      ]
+    }
+  ],
+  "spriteSheets": [
+    {
+      "name": "lantern",
+      "texture": "textures/lantern.png",
+      "bitDepth": 4,
+      "cellWidth": 16,
+      "cellHeight": 16,
+      "anims": [
+        {
+          "name": "dark",
+          "firstFrame": 0,
+          "frameCount": 1,
+          "frameDuration": 6,
+          "loop": false
+        },
+        {
+          "name": "flame",
+          "firstFrame": 1,
+          "frameCount": 4,
+          "frameDuration": 7,
+          "loop": true
+        }
       ]
     }
   ],
