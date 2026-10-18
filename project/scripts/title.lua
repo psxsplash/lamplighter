@@ -7,7 +7,10 @@
 --   beacons  bit mask of the relit beacons (1, 2, 4)
 --   lamp     1 once the lighthouse lamp is lit
 --   lost     1 when the player fell off a cliff: the title shows "lost";
---            2 when the Warden caught the player (scripts/warden.lua): "caught"
+--            2 when the Warden caught the player (scripts/warden.lua): "caught";
+--            3 after the lighthouse's credits (scripts/lighthouse.lua): "lit"
+--   intro    1 once the valley has played its intro (scripts/valley.lua):
+--            New game clears it, Continue sets it
 --   keeper   1 once the keep's keeper has been heard out (scripts/keeper.lua)
 --   shrine   the save shrine to start at in the valley (scripts/valley.lua)
 -- A save is the table {scene = <index>, beacons = <mask>, lamp = <0 or 1>,
@@ -64,6 +67,7 @@ local function resetState()
     Persist.Set("lamp", 0)
     Persist.Set("keeper", 0)
     Persist.Set("shrine", 0)
+    Persist.Set("intro", 0)
 end
 
 function onCreate(self)
@@ -77,13 +81,16 @@ function onCreate(self)
     save = MemCard.Load(0, SAVE_KEY)
     if type(save) ~= "table" or save.scene == nil then save = nil end
     UI.SetVisible(continue, save ~= nil)
-    -- Back from a fall off a cliff (scripts/fall.lua) or caught by the
-    -- Warden (scripts/warden.lua): say so, once.
+    -- Back from a fall off a cliff (scripts/fall.lua), caught by the
+    -- Warden (scripts/warden.lua) or the end (scripts/lighthouse.lua): say
+    -- so, once.
     local lost = Persist.Get("lost")
     if lost == 1 then
         UI.SetVisible(UI.FindElement(canvas, "lost"), true)
     elseif lost == 2 then
         UI.SetVisible(UI.FindElement(canvas, "caught"), true)
+    elseif lost == 3 then
+        UI.SetVisible(UI.FindElement(canvas, "lit"), true)
     end
     Persist.Set("lost", 0)
     show()
@@ -108,6 +115,8 @@ function onButtonPress(self, button)
             Persist.Set("lamp", save.lamp or 0)
             Persist.Set("keeper", save.keeper or 0)
             Persist.Set("shrine", save.shrine or 0)
+            -- A saved game has had its intro.
+            Persist.Set("intro", 1)
             Scene.Load(save.scene)
         end
     end

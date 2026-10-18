@@ -4,7 +4,8 @@
 #   python3 -P tests/featurecheck_selftest.py <splashedit-ng checkout> <splashpack-cli> <psxsplash cdrom .ps-exe>
 #
 # 1. Lamplighter at its own phase passes.
-# 2. Lamplighter one phase further fails, naming the missing features.
+# 2. Lamplighter one phase further fails, naming the missing features
+#    (while features.json plans a later phase).
 # 3. On a control project (the editor's third-person template plus a CD-DA
 #    track), every check kind reports a feature it uses as PASS and one it
 #    does not use as FAIL.
@@ -54,10 +55,16 @@ def main():
     check(rc == 0, f"phase {phase}: lamplighter passes")
     check(f"featurecheck: phase {phase}," in out and " 0 failed" in out, "summary line says 0 failed")
 
-    rc, out = run(args, FEATURECHECK_PHASE=str(phase + 1))
-    missing = [l for l in out.splitlines() if " FAIL " in l]
-    check(rc == 1, f"phase {phase + 1}: lamplighter fails")
-    check(len(missing) > 0, f"phase {phase + 1}: {len(missing)} features reported FAIL")
+    # Only while features.json plans a later phase: at the last one there is
+    # nothing left to fail, and step 3 still proves that FAIL is reported.
+    features = json.load(open(os.path.join(ROOT, "features.json")))["features"]
+    if any(f["phase"] > phase for f in features):
+        rc, out = run(args, FEATURECHECK_PHASE=str(phase + 1))
+        missing = [l for l in out.splitlines() if " FAIL " in l]
+        check(rc == 1, f"phase {phase + 1}: lamplighter fails")
+        check(len(missing) > 0, f"phase {phase + 1}: {len(missing)} features reported FAIL")
+    else:
+        print(f"skip phase {phase + 1}: no feature is planned past phase {phase}")
 
     # Every check kind once with a value the control project has (must PASS)
     # and once with one it lacks (must FAIL).

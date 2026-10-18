@@ -2,6 +2,7 @@
 #   python3 -P tools/scenes.py [project-dir]
 # Run tools/build.sh to regenerate everything (art, import, scenes) in order.
 import json
+import math
 import os
 import sys
 
@@ -199,6 +200,8 @@ def title_canvas():
         text("lost", "You fell from the cliff edge", 48, 104, 230, 10, AMBER, visible=False),
         # Shown by title.lua after the Warden caught the player (scripts/warden.lua).
         text("caught", "The Warden caught you", 76, 104, 180, 10, AMBER, visible=False),
+        # Shown by title.lua after the lighthouse's credits (scripts/lighthouse.lua).
+        text("lit", "The valley is lit again", 68, 104, 190, 10, AMBER, visible=False),
         text("newgame", "New game", 112, 148, 100, 24, PALE, font="menu"),
         text("continue", "Continue", 112, 172, 100, 24, PALE, font="menu", visible=False),
         text("cursor", ">", 92, 148, 16, 24, AMBER, font="menu"),
@@ -206,8 +209,41 @@ def title_canvas():
     ])
 
 
+# Cutscenes and animations, phase 5. Frames are 30 a second. Values are in
+# each track's units (docs/scene-format.md in splashedit-ng): scene metres
+# for camera and light positions, Euler degrees for rotations (yaw 0 looks
+# along +z, yaw 90 along +x), 0..1 colours, 0/1 for visibility, rumble and
+# light switches, pixels for UI positions, the light's own intensity.
+
+def key(frame, *value, interp="linear"):
+    v = list(value) + [0.0] * (3 - len(value))
+    return {"frame": frame, "value": [float(x) for x in v], "interp": interp}
+
+
+def track(kind, target, *keys):
+    return {"type": kind, "target": target, "keyframes": list(keys)}
+
+
+def sequence(name, frames, *tracks):
+    # A cutscene (Cutscene.Play) or an animation (Animation.Play): at most
+    # 8 tracks of 64 keys each. Cutscenes also carry audioEvents.
+    return {"name": name, "durationFrames": frames, "tracks": list(tracks)}
+
+
+def cutscene(name, frames, *tracks):
+    return dict(sequence(name, frames, *tracks), audioEvents=[])
+
+
+def look(frm, to):
+    # The camera rotation (pitch, yaw) that looks from `frm` towards `to`.
+    dx, dy, dz = (to[i] - frm[i] for i in range(3))
+    yaw = math.degrees(math.atan2(dx, dz))
+    pitch = math.degrees(math.atan2(-dy, math.hypot(dx, dz)))
+    return pitch, yaw
+
+
 def scene(objects, sceneType="exterior", script=None, canvases=(), loading=None,
-          sky=(0.5, 0.5, 0.6), fog=0, stream=False, bump=0):
+          sky=(0.5, 0.5, 0.6), fog=0, stream=False, bump=0, cutscenes=(), animations=()):
     # psxsplash clears the screen to the fog colour, fog on or off: `sky`.
     # `fog` is the density, 0 for none: the far plane is 20000 / density in
     # screen depth, about 98 m at 5 with this GTE scaling.
@@ -226,8 +262,13 @@ def scene(objects, sceneType="exterior", script=None, canvases=(), loading=None,
     if loading is not None:
         settings["loadingCanvas"] = "Loading"
         canvases.append(loading_canvas(loading))
-    return {"format": "splashedit-ng/scene", "version": 1, "settings": settings,
-            "objects": objects, "fonts": [dict(f) for f in FONTS], "canvases": canvases}
+    out = {"format": "splashedit-ng/scene", "version": 1, "settings": settings,
+           "objects": objects, "fonts": [dict(f) for f in FONTS], "canvases": canvases}
+    if cutscenes:
+        out["cutscenes"] = list(cutscenes)
+    if animations:
+        out["animations"] = list(animations)
+    return out
 
 
 def title():
@@ -333,6 +374,92 @@ def shrine_canvas():
     ], sortOrder=10)
 
 
+# Phase 5. psxsplash draws a UI box opaque (uisystem.cpp), so a fade is a
+# full-screen box whose colour runs between the fog's and black, not a
+# blend over the scene.
+
+# The lighthouse gate: 14 m to the right of the start and 2 m back from it,
+# inland of the rim and clear of the Warden's patrol (its nearest corner is 23 m off).
+# with all three beacons lit opens the lighthouse (scene 3); otherwise the
+# `gate` cutscene says what is missing (scripts/lighthouse_gate.lua).
+LIGHTHOUSE_GATE = (14.0, -0.3, -2.0)
+
+
+def story_canvas():
+    # The intro's fade and line, and the gate's refusal; hidden until a
+    # cutscene shows them.
+    return canvas("Story", [dict(e, visible=False) for e in [
+        box("fade", (0, 0, 0, 0), [0.0, 0.0, 0.0], stretch=True),
+        text("intro", "The beacons have gone dark", 56, 200, 210, 10, FOG),
+        text("gate", "The lamp needs all three beacons", 32, 200, 260, 10, PALE)]], sortOrder=20)
+
+
+def gameover_canvas():
+    # Over everything: the fade and the line, which warden.lua and fall.lua
+    # set ("Caught by the Warden", "You fell") before the `gameover` cutscene.
+    return canvas("Gameover", [dict(e, visible=False) for e in [
+        box("fade", (0, 0, 0, 0), list(FOG), stretch=True),
+        text("line", "", 80, 116, 160, 10, [0.0, 0.0, 0.0])]], sortOrder=30)
+
+
+# The intro, once a New game (Persist `intro`, scripts/valley.lua): out of
+# black into the fog over the sea, then a sweep from the cliff rim back over
+# the dark beacons and down to the player's eyes, the line fading in and out
+# of the fog colour on the way. valley.lua holds the player's controls until
+# it ends.
+INTRO_PATH = [
+    # frame, camera position, the point it looks at
+    (0, (0.0, 5.0, 13.0), (0.0, 1.0, -6.0)),
+    (60, (-2.0, 6.5, 4.0), (2.0, 0.5, -12.0)),
+    (120, (-6.0, 8.0, -10.0), (14.0, 0.0, -36.0)),
+    (170, (6.0, 6.0, -24.0), (-12.0, 1.0, -18.0)),
+    (230, (0.0, 2.2, -2.0), (0.0, 2.0, 8.0)),
+]
+
+
+def unwrap(yaws):
+    # Yaw keys interpolate linearly: keep each within half a turn of the last.
+    out = [yaws[0]]
+    for y in yaws[1:]:
+        while y - out[-1] > 180:
+            y -= 360
+        while y - out[-1] < -180:
+            y += 360
+        out.append(y)
+    return out
+
+
+def camera_path(path, interp="easeInOut"):
+    looks = [look(p, t) for _, p, t in path]
+    yaws = unwrap([y for _, y in looks])
+    return (track("cameraPosition", "", *[key(f, *p, interp=interp) for f, p, _ in path]),
+            track("cameraRotation", "", *[key(f, looks[i][0], yaws[i], 0.0, interp=interp)
+                                          for i, (f, _, _) in enumerate(path)]))
+
+
+def valley_cutscenes():
+    black, fog = (0.0, 0.0, 0.0), FOG
+    intro = cutscene("intro", 240,
+        *camera_path(INTRO_PATH),
+        track("uiElementVisible", "Story/fade", key(0, 1, interp="step"), key(24, 0, interp="step")),
+        track("uiColor", "Story/fade", key(0, *black), key(24, *fog)),
+        track("uiElementVisible", "Story/intro", key(0, 0, interp="step"), key(40, 1, interp="step"),
+              key(200, 0, interp="step")),
+        track("uiColor", "Story/intro", key(40, *fog), key(70, *AMBER), key(170, *AMBER), key(200, *fog)))
+    # Its last key is short of the end: psxsplash ends a cutscene on the
+    # first frame past its length, which can skip a key on the last frame.
+    gate = cutscene("gate", 66,
+        track("uiElementVisible", "Story/gate", key(0, 1, interp="step"), key(60, 0, interp="step")))
+    # The game over, in place: the fog closes in and goes black, the line
+    # comes up out of the dark; warden.lua or fall.lua then loads the title.
+    gameover = cutscene("gameover", 90,
+        track("uiElementVisible", "Gameover/fade", key(0, 1, interp="step")),
+        track("uiColor", "Gameover/fade", key(0, *fog), key(30, *black)),
+        track("uiElementVisible", "Gameover/line", key(20, 1, interp="step")),
+        track("uiColor", "Gameover/line", key(20, *black), key(45, *AMBER)))
+    return [intro, gate, gameover]
+
+
 def valley():
     # Dusk in a fog-bound valley that ends to the north in a cliff over the
     # sea. The player starts 8 m from the rim facing it (+z), BeaconA close
@@ -350,9 +477,12 @@ def valley():
         *[beacon(n, p) for n, p in BEACONS],
         *[beacon_light(n, p) for n, p in BEACONS],
         # The whole rim can be walked off; the box below it catches the fall.
+        # The valley's coarse nav (VALLEY_NAV) lets the player off as much as
+        # 5 m short of the rim (measured at x = 4, z = 3.4, phase 5), so the
+        # box reaches back under the ground to z = 1.
         obj("Rim edge", [walkoff((448.0, 40.0, 3.0))], pos=(0.0, 4.0, VALLEY_RIM_Z)),
-        obj("Fall", [trigger((460.0, 10.0, 24.0), "scripts/fall.lua")],
-            pos=(0.0, -8.0, VALLEY_RIM_Z + 10.0)),
+        obj("Fall", [trigger((460.0, 10.0, 32.0), "scripts/fall.lua")],
+            pos=(0.0, -8.0, VALLEY_RIM_Z + 9.0)),
         obj("Ignite sound", [audio("sounds/ignite.wav", "ignite")]),
         obj("Chime sound", [audio("sounds/chime.wav", "chime")]),
         obj("Wind sound", [audio("sounds/wind.wav", "wind", loop=True)]),
@@ -361,13 +491,18 @@ def valley():
         obj("Keep gate", [mesh("models/arch/arch.mesh", "textures/stone.png")], pos=KEEP_GATE),
         obj("Keep door", [trigger((1.2, 3.0, 2.0), "scripts/keep_door.lua")],
             pos=(KEEP_GATE[0], 1.5, KEEP_GATE[2])),
+        # The lighthouse gate (phase 5), the keep's arch again, 14 m to the
+        # right of the start.
+        obj("Lighthouse arch", [mesh("models/arch/arch.mesh", "textures/stone.png")], pos=LIGHTHOUSE_GATE),
+        obj("Lighthouse gate", [trigger((1.2, 3.0, 2.0), "scripts/lighthouse_gate.lua")],
+            pos=(LIGHTHOUSE_GATE[0], 1.5, LIGHTHOUSE_GATE[2])),
         warden(),
         *[shrine(n, p) for n, p in SHRINES],
         *[shrine_light(n, p) for n, p in SHRINES],
         obj("Player", [player(VALLEY_NAV)], pos=(0.0, 0.5, 0.0)),
         obj("Sun", [sun(color=(0.85, 0.82, 0.9), intensity=0.6)], rot=LOOK_DOWN_50),
-    ], script="scripts/valley.lua", canvases=[shrine_canvas()], loading="The valley", sky=FOG, fog=10,
-        stream=True)
+    ], script="scripts/valley.lua", canvases=[shrine_canvas(), story_canvas(), gameover_canvas()],
+        loading="The valley", sky=FOG, fog=10, stream=True, cutscenes=valley_cutscenes())
 
 
 # Where the keep's gate stands in the valley: left of the start (-x), the
@@ -463,16 +598,99 @@ def keep():
     ], sceneType="interior", canvases=[dialogue_canvas()], loading="The keep", sky=KEEP_DARK)
 
 
-def placeholder(texture, caption, script=None):
-    # Phase 0: a ground square, one beacon and the player. Later phases
-    # replace each with its real content.
+# The lighthouse, phase 5: the player comes out on the gallery at the top of
+# the tower (models/lighthouse/tower, its floor at y = 0), facing the lamp:
+# the lens on its pedestal under the lantern roof, the sea 22 m below.
+# Circle at the lens lights it (scripts/lighthouse.lua): Persist `lamp` = 1,
+# the `lens` animation turns it and the `finale` cutscene circles the tower
+# while the runtime light `Lamp light` comes up; then the `credits` roll and
+# the title says the valley is lit again.
+LIGHTHOUSE_COLOURS = [(0.86, 0.85, 0.8, 1.0), (0.62, 0.16, 0.12, 1.0), (0.18, 0.18, 0.2, 1.0)]
+LENS_COLOURS = [(1.0, 0.86, 0.5, 1.0), (0.45, 0.33, 0.14, 1.0)]
+LENS_AT = (0.0, 1.4, 0.0)
+LAMP_GLOW = (1.0, 0.86, 0.55)
+# Night, with a sea mist: the fog (98 m at density 5) also keeps the scene's
+# ordering table under the title's, which sizes psxsplash's render buffers
+# (without it the sea's diagonal asks for twice the title's).
+NIGHT = (0.03, 0.04, 0.1)
+
+
+def tower():
+    m = mesh("models/lighthouse/tower.mesh")
+    m["materials"] = [{"texture": "textures/stone.png" if i < 2 else None, "color": list(c)}
+                      for i, c in enumerate(LIGHTHOUSE_COLOURS)]
+    return obj("Tower", [m, collider()])
+
+
+def lens():
+    # Unlit, its own colours at a little over half: the lamp light sits
+    # inside it and would light only its insides, and the glass panels have
+    # to show for its turning to.
+    m = mesh("models/lighthouse/lens.mesh")
+    m["materials"] = [{"texture": None, "color": list(c)} for c in LENS_COLOURS]
+    m.update(vertexColors="flat", flatColor=[160, 160, 160], dynamicLighting="off")
+    # psxsplash measures the reach from the eyes to the lens's centre.
+    return obj("Lens", [m, interactable(3.0, 13, repeatable=False), script("scripts/lighthouse.lua")],
+               pos=LENS_AT)
+
+
+def credits_canvas():
+    # Hidden until the `credits` cutscene shows it and scrolls the lines up
+    # from below the screen.
+    lines = [text("l0", "Lamplighter", 91, 0, 140, 36, AMBER, font="title")]
+    for i, s in enumerate(["The lamp burns again", "A psxsplash sample game", "Built with splashedit-ng",
+                           "Title type: EB Garamond, OFL", "Thank you for playing"]):
+        lines.append(text(f"l{i + 1}", s, 160 - 4 * len(s), 0, 8 * len(s), 10, PALE if i else AMBER))
+    return canvas("Credits", [box("backdrop", (0, 0, 0, 0), [0.0, 0.0, 0.0], stretch=True), *lines],
+                  sortOrder=30, visible=False)
+
+
+CREDITS_FIRST_Y = 250   # each line starts below the screen ...
+CREDITS_GAP = 34        # ... this far under the one before
+CREDITS_RISE = 220      # and rises this far, the first line ending 30 px down
+ORBIT_CENTRE = (0.0, 1.8, 0.0)
+
+
+def lighthouse_sequences():
+    # The finale: from the player's eyes back out over the parapet and once
+    # round the tower, 9 m out and 3.5 m up, while the lamp catches.
+    path = [(0, (0.0, 2.0, -2.4), LENS_AT), (40, (0.0, 3.5, -9.0), ORBIT_CENTRE)]
+    for k in range(1, 13):
+        a = math.radians(180 + 30 * k)
+        path.append((40 + 20 * k, (9.0 * math.sin(a), 3.5, 9.0 * math.cos(a)), ORBIT_CENTRE))
+    cam_pos, cam_rot = camera_path(path, interp="linear")
+    finale = cutscene("finale", 320, cam_pos, cam_rot,
+        track("lightEnabled", "Lamp light", key(0, 1, interp="step")),
+        track("lightIntensity", "Lamp light", key(0, 0.0), key(12, 0.8), key(24, 0.3), key(120, 2.4)),
+        track("lightColor", "Lamp light", key(0, 0.8, 0.3, 0.1), key(120, *LAMP_GLOW)),
+        track("rumbleSmall", "", key(0, 1, interp="step"), key(30, 0, interp="step")))
+    xs = [91] + [160 - 4 * len(e["text"]) for e in credits_canvas()["elements"][2:]]
+    rolls = [track("uiPosition", f"Credits/l{i}",
+                   key(0, x, CREDITS_FIRST_Y + CREDITS_GAP * i),
+                   key(330, x, CREDITS_FIRST_Y + CREDITS_GAP * i - CREDITS_RISE))
+             for i, x in enumerate(xs)]
+    credits = cutscene("credits", 390, track("uiCanvasVisible", "Credits", key(0, 1, interp="step")), *rolls)
+    # The lens turns once every three seconds, started by lighthouse.lua.
+    turn = sequence("lens", 90, track("objectRotation", "Lens", key(0, 0, 0, 0), key(90, 0, 360, 0)))
+    return [finale, credits], [turn]
+
+
+def lighthouse():
+    cutscenes, animations = lighthouse_sequences()
     return scene([
-        obj("Ground", [mesh("models/ground.mesh", "textures/" + texture), collider()]),
-        obj("Beacon", [mesh("models/beacon.mesh", "textures/stone.png"), collider()],
-            pos=(0.0, 0.0, 4.0)),
-        obj("Player", [player()], pos=(0.0, 0.0, -5.0)),
-        obj("Sun", [sun()], rot=LOOK_DOWN_50),
-    ], script=script, loading=caption)
+        tower(),
+        lens(),
+        # Dark until the finale lights it.
+        obj("Lamp light", [lamp(LAMP_GLOW, 3.0, 14.0)], pos=LENS_AT),
+        obj("Sea", [mesh("models/sea.mesh", "textures/sea.png", color=(0.7, 0.75, 0.9, 1.0))],
+            pos=(0.0, -22.0, 0.0), scale=(2.0, 1.0, 2.0)),
+        obj("Headland", [mesh("models/cliff.mesh", "textures/rock.png", color=SILHOUETTE)],
+            pos=(-14.0, -22.0, -40.0), rot=YAW_25, scale=(2.0, 1.5, 1.5)),
+        # Half a metre up: the exporter puts the eyes on the floor below.
+        obj("Player", [player()], pos=(0.0, 0.5, -2.6)),
+        obj("Moon", [sun(color=(0.55, 0.62, 0.9), intensity=0.6)], rot=LOOK_DOWN_50),
+    ], canvases=[credits_canvas()], loading="The lighthouse", sky=NIGHT, fog=5,
+        cutscenes=cutscenes, animations=animations)
 
 
 def write_json(path, data):
@@ -487,7 +705,7 @@ def main():
         "title": title(),
         "valley": valley(),
         "keep": keep(),
-        "lighthouse": placeholder("stone.png", "The lighthouse"),
+        "lighthouse": lighthouse(),
     }
     for name in SCENES:
         write_json(os.path.join(PROJECT, name + ".scene"), scenes[name])

@@ -627,6 +627,32 @@
         },
         {
           "type": "text",
+          "name": "lit",
+          "visible": false,
+          "rect": [
+            68,
+            104,
+            190,
+            10
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "color": [
+            1.0,
+            0.78,
+            0.42
+          ],
+          "text": "The valley is lit again",
+          "font": null
+        },
+        {
+          "type": "text",
           "name": "newgame",
           "visible": true,
           "rect": [

@@ -11927,7 +11927,7 @@
         "position": [
           0.0,
           -8.0,
-          18.0
+          17.0
         ],
         "rotation": [
           0.0,
@@ -11947,7 +11947,7 @@
           "size": [
             460.0,
             10.0,
-            24.0
+            32.0
           ],
           "lua": "scripts/fall.lua"
         }
@@ -12136,6 +12136,90 @@
             2.0
           ],
           "lua": "scripts/keep_door.lua"
+        }
+      ],
+      "children": []
+    },
+    {
+      "name": "Lighthouse arch",
+      "active": true,
+      "transform": {
+        "position": [
+          14.0,
+          -0.3,
+          -2.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "components": [
+        {
+          "type": "mesh",
+          "mesh": "models/arch/arch.mesh",
+          "materials": [
+            {
+              "texture": "textures/stone.png",
+              "color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "bitDepth": 8,
+          "vertexColors": "baked",
+          "flatColor": [
+            128,
+            128,
+            128
+          ],
+          "smoothNormals": true,
+          "uvOffsetMaterial": 0,
+          "dynamicLighting": "auto"
+        }
+      ],
+      "children": []
+    },
+    {
+      "name": "Lighthouse gate",
+      "active": true,
+      "transform": {
+        "position": [
+          14.0,
+          1.5,
+          -2.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "components": [
+        {
+          "type": "trigger",
+          "size": [
+            1.2,
+            3.0,
+            2.0
+          ],
+          "lua": "scripts/lighthouse_gate.lua"
         }
       ],
       "children": []
@@ -12693,6 +12777,148 @@
       ]
     },
     {
+      "name": "Story",
+      "visible": true,
+      "sortOrder": 20,
+      "defaultFont": null,
+      "elements": [
+        {
+          "type": "box",
+          "name": "fade",
+          "visible": false,
+          "rect": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            1.0,
+            1.0
+          ],
+          "color": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "type": "text",
+          "name": "intro",
+          "visible": false,
+          "rect": [
+            56,
+            200,
+            210,
+            10
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "color": [
+            0.45,
+            0.5,
+            0.58
+          ],
+          "text": "The beacons have gone dark",
+          "font": null
+        },
+        {
+          "type": "text",
+          "name": "gate",
+          "visible": false,
+          "rect": [
+            32,
+            200,
+            260,
+            10
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "color": [
+            0.82,
+            0.84,
+            0.9
+          ],
+          "text": "The lamp needs all three beacons",
+          "font": null
+        }
+      ]
+    },
+    {
+      "name": "Gameover",
+      "visible": true,
+      "sortOrder": 30,
+      "defaultFont": null,
+      "elements": [
+        {
+          "type": "box",
+          "name": "fade",
+          "visible": false,
+          "rect": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            1.0,
+            1.0
+          ],
+          "color": [
+            0.45,
+            0.5,
+            0.58
+          ]
+        },
+        {
+          "type": "text",
+          "name": "line",
+          "visible": false,
+          "rect": [
+            80,
+            116,
+            160,
+            10
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "color": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "text": "",
+          "font": null
+        }
+      ]
+    },
+    {
       "name": "Loading",
       "visible": true,
       "sortOrder": 255,
@@ -12805,6 +13031,356 @@
           "value": 0
         }
       ]
+    }
+  ],
+  "cutscenes": [
+    {
+      "name": "intro",
+      "durationFrames": 240,
+      "tracks": [
+        {
+          "type": "cameraPosition",
+          "target": "",
+          "keyframes": [
+            {
+              "frame": 0,
+              "value": [
+                0.0,
+                5.0,
+                13.0
+              ],
+              "interp": "easeInOut"
+            },
+            {
+              "frame": 60,
+              "value": [
+                -2.0,
+                6.5,
+                4.0
+              ],
+              "interp": "easeInOut"
+            },
+            {
+              "frame": 120,
+              "value": [
+                -6.0,
+                8.0,
+                -10.0
+              ],
+              "interp": "easeInOut"
+            },
+            {
+              "frame": 170,
+              "value": [
+                6.0,
+                6.0,
+                -24.0
+              ],
+              "interp": "easeInOut"
+            },
+            {
+              "frame": 230,
+              "value": [
+                0.0,
+                2.2,
+                -2.0
+              ],
+              "interp": "easeInOut"
+            }
+          ]
+        },
+        {
+          "type": "cameraRotation",
+          "target": "",
+          "keyframes": [
+            {
+              "frame": 0,
+              "value": [
+                11.888658,
+                180.0,
+                0.0
+              ],
+              "interp": "easeInOut"
+            },
+            {
+              "frame": 60,
+              "value": [
+                19.99156,
+                165.96376,
+                0.0
+              ],
+              "interp": "easeInOut"
+            },
+            {
+              "frame": 120,
+              "value": [
+                13.70598,
+                142.43141,
+                0.0
+              ],
+              "interp": "easeInOut"
+            },
+            {
+              "frame": 170,
+              "value": [
+                14.763133,
+                288.43494,
+                0.0
+              ],
+              "interp": "easeInOut"
+            },
+            {
+              "frame": 230,
+              "value": [
+                1.1457628,
+                360.0,
+                0.0
+              ],
+              "interp": "easeInOut"
+            }
+          ]
+        },
+        {
+          "type": "uiElementVisible",
+          "target": "Story/fade",
+          "keyframes": [
+            {
+              "frame": 0,
+              "value": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "interp": "step"
+            },
+            {
+              "frame": 24,
+              "value": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "interp": "step"
+            }
+          ]
+        },
+        {
+          "type": "uiColor",
+          "target": "Story/fade",
+          "keyframes": [
+            {
+              "frame": 0,
+              "value": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "interp": "linear"
+            },
+            {
+              "frame": 24,
+              "value": [
+                0.45,
+                0.5,
+                0.58
+              ],
+              "interp": "linear"
+            }
+          ]
+        },
+        {
+          "type": "uiElementVisible",
+          "target": "Story/intro",
+          "keyframes": [
+            {
+              "frame": 0,
+              "value": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "interp": "step"
+            },
+            {
+              "frame": 40,
+              "value": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "interp": "step"
+            },
+            {
+              "frame": 200,
+              "value": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "interp": "step"
+            }
+          ]
+        },
+        {
+          "type": "uiColor",
+          "target": "Story/intro",
+          "keyframes": [
+            {
+              "frame": 40,
+              "value": [
+                0.45,
+                0.5,
+                0.58
+              ],
+              "interp": "linear"
+            },
+            {
+              "frame": 70,
+              "value": [
+                1.0,
+                0.78,
+                0.42
+              ],
+              "interp": "linear"
+            },
+            {
+              "frame": 170,
+              "value": [
+                1.0,
+                0.78,
+                0.42
+              ],
+              "interp": "linear"
+            },
+            {
+              "frame": 200,
+              "value": [
+                0.45,
+                0.5,
+                0.58
+              ],
+              "interp": "linear"
+            }
+          ]
+        }
+      ],
+      "audioEvents": []
+    },
+    {
+      "name": "gate",
+      "durationFrames": 66,
+      "tracks": [
+        {
+          "type": "uiElementVisible",
+          "target": "Story/gate",
+          "keyframes": [
+            {
+              "frame": 0,
+              "value": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "interp": "step"
+            },
+            {
+              "frame": 60,
+              "value": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "interp": "step"
+            }
+          ]
+        }
+      ],
+      "audioEvents": []
+    },
+    {
+      "name": "gameover",
+      "durationFrames": 90,
+      "tracks": [
+        {
+          "type": "uiElementVisible",
+          "target": "Gameover/fade",
+          "keyframes": [
+            {
+              "frame": 0,
+              "value": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "interp": "step"
+            }
+          ]
+        },
+        {
+          "type": "uiColor",
+          "target": "Gameover/fade",
+          "keyframes": [
+            {
+              "frame": 0,
+              "value": [
+                0.45,
+                0.5,
+                0.58
+              ],
+              "interp": "linear"
+            },
+            {
+              "frame": 30,
+              "value": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "interp": "linear"
+            }
+          ]
+        },
+        {
+          "type": "uiElementVisible",
+          "target": "Gameover/line",
+          "keyframes": [
+            {
+              "frame": 20,
+              "value": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "interp": "step"
+            }
+          ]
+        },
+        {
+          "type": "uiColor",
+          "target": "Gameover/line",
+          "keyframes": [
+            {
+              "frame": 20,
+              "value": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "interp": "linear"
+            },
+            {
+              "frame": 45,
+              "value": [
+                1.0,
+                0.78,
+                0.42
+              ],
+              "interp": "linear"
+            }
+          ]
+        }
+      ],
+      "audioEvents": []
     }
   ]
 }
