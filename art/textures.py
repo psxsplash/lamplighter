@@ -81,24 +81,25 @@ def icon():
 # The lantern sprite sheet, five 16 x 16 cells in a row and one 16-colour
 # palette: cell 0 an unlit lantern, cells 1-4 the same lantern lit, its flame
 # flickering. The valley's beacon tally plays them (`dark`, `flame`) and the
-# title's menu cursor shows cell 0 (tools/scenes.py). "." is transparent.
+# title's menu cursor shows cell 0 (tools/scenes.py). "." is transparent; the
+# dark outline "o" keeps the grey frame readable on the valley's grey fog.
 LANTERN = [
-    "......RRRR......",
-    ".....R....R.....",
-    "......RRRR......",
-    "....rRRRRRRr....",
-    "...rRRRRRRRRr...",
-    "...R########R...",
-    "...R########R...",
-    "...R########R...",
-    "...R########R...",
-    "...R########R...",
-    "...R########R...",
-    "...R########R...",
-    "...rRRRRRRRRr...",
-    "....rRRRRRRr....",
-    "....rr....rr....",
-    "................",
+    "......oooo......",
+    ".....oRRRRo.....",
+    ".....oRooRo.....",
+    "....ooRRRRoo....",
+    "...orRRRRRRro...",
+    "..orRRRRRRRRro..",
+    "..oR########Ro..",
+    "..oR########Ro..",
+    "..oR########Ro..",
+    "..oR########Ro..",
+    "..oR########Ro..",
+    "..oR########Ro..",
+    "..oR########Ro..",
+    "..orRRRRRRRRro..",
+    "...orRRRRRRro...",
+    "....oooooooo....",
 ]
 # What fills the glass (the "#" block, 8 x 7): dark glass with a glint, then
 # the flame in four shapes over a red glow.
@@ -110,7 +111,7 @@ LANTERN_GLASS = [
     ["fffFffff", "fffFffff", "ffFYFfff", "ffFYYFff", "fFYWYFff", "fFYWWYFf", "ffFYYFff"],
 ]
 LANTERN_COLOURS = {
-    ".": (0, 0, 0, 0), "r": (84, 80, 76, 255), "R": (132, 126, 116, 255),
+    ".": (0, 0, 0, 0), "o": (24, 22, 30, 255), "r": (84, 80, 76, 255), "R": (132, 126, 116, 255),
     "g": (36, 44, 70, 255), "h": (110, 124, 160, 255), "f": (120, 44, 14, 255),
     "F": (232, 120, 24, 255), "Y": (252, 200, 64, 255), "W": (255, 248, 200, 255),
 }
@@ -122,7 +123,7 @@ def lantern_sheet():
         for y, row in enumerate(LANTERN):
             for x, ch in enumerate(row):
                 if ch == "#":
-                    ch = glass[y - 5][x - 4]
+                    ch = glass[y - 6][x - 4]
                 img.putpixel((16 * cell + x, y), LANTERN_COLOURS[ch])
     return img
 
