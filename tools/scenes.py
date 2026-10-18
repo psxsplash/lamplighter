@@ -100,9 +100,9 @@ TERRAIN_NAV = {"navCellSize": 0.08, "navCellHeight": 0.04, "navMinRegionArea": 4
                "navDetailMaxError": 0.02, "navMaxPlaneError": 0.1}
 
 # The valley's nav, phase 4: the Terrain preset made 2468 regions over the
-# 448 m valley, and psxsplash's Actor.FindPath finds no path at all in a
-# scene of more than 256 (navregion.cpp, NAV_MAX_SEARCH_REGIONS), which the
-# Warden walks by. Watershed regions, simplified harder and allowed longer
+# 448 m valley, and psxsplash's path search (Actor.FindPath's and the
+# agents') finds no path at all in a scene of more than 256 (navregion.cpp,
+# NAV_MAX_SEARCH_REGIONS), which the Warden walks by. Watershed regions, simplified harder and allowed longer
 # edges, make under 200 that follow the ground's swells as closely as the
 # preset's long monotone strips did.
 VALLEY_NAV = dict(TERRAIN_NAV, navPartitionMethod="watershed", navMaxSimplifyError=3.0,
@@ -328,16 +328,25 @@ def beacon_light(name, pos):
     return obj(name + "_light", [lamp(EMBER, 2.0, 9.0)], pos=(pos[0], pos[1] + 2.9, pos[2]))
 
 
-# The Warden, phase 4: models/warden, a skinned mesh with the clips walk,
-# run and idle (SkinnedAnim.Play("Warden", ...)). scripts/warden.lua walks
-# him round his patrol on the nav regions and chases a player who comes
-# near; he starts at its first corner. A script and a skin keep an object
-# out of the streamed regions, so he is always loaded.
+# The Warden: models/warden, a skinned mesh with the clips walk, run and
+# idle. psxsplash's agent moves him: round the four corners of his patrol on
+# the nav regions, and after the player once he sees him; scripts/warden.lua
+# says when to chase, give up, pause at a corner, and which clip plays (the
+# clips do not loop, so the agent's per-state clips would stop after one
+# pass). He starts at the first corner. A script, a skin or an agent keeps an
+# object out of the streamed regions, so he is always loaded.
 WARDEN_CLIPS = ["models/warden/walk.anim", "models/warden/run.anim", "models/warden/idle.anim"]
 # Cloak, hood, mask, eyes and boots, in the order of the model's materials.
 WARDEN_COLOURS = [(0.16, 0.17, 0.22, 1.0), (0.1, 0.1, 0.14, 1.0), (0.78, 0.76, 0.7, 1.0),
                   (1.0, 0.45, 0.2, 1.0), (0.08, 0.07, 0.07, 1.0)]
 WARDEN_START = (-18.0, 0.0, -30.0)
+# The patrol's corners (x, z), round between BeaconB and BeaconC, south of
+# the start, all at his start height: the ground there is within 0.55 m of
+# it, and the agent takes his height from the nav floor as he walks.
+WARDEN_PATROL = [(-18.0, -30.0), (0.0, -44.0), (20.0, -24.0), (2.0, -22.0)]
+# The agent stores its speed as whole GTE units a frame (at the valley's GTE
+# scaling of 100, 30 frames a second); 2 a frame is his walk, 1.46 m/s.
+WARDEN_WALK = 2 * 30 * 100 / 4096
 
 # Save shrines, phase 4: name, foot. Circle in reach saves the game
 # (scripts/shrine.lua); Continue on the title puts the player back 3 m in
@@ -350,7 +359,19 @@ SHRINE_GLOW = (0.6, 0.75, 1.0)
 def warden():
     m = mesh("models/warden/warden.mesh")
     m["materials"] = [{"texture": None, "color": list(c)} for c in WARDEN_COLOURS]
-    return obj("Warden", [m, skin(WARDEN_CLIPS), script("scripts/warden.lua")], pos=WARDEN_START)
+    return obj("Warden", [m, skin(WARDEN_CLIPS), script("scripts/warden.lua"), warden_agent()],
+               pos=WARDEN_START)
+
+
+def warden_agent():
+    # Sees all round, 10 m (a square: psxsplash takes the larger of the x and
+    # z distances), as far as 8 nav regions away, which on the valley's
+    # coarse nav is no limit inside 10 m. Two seconds (60 frames) unseen and
+    # he has lost the player. Deaf.
+    return {"type": "agent", "startEnabled": True, "moveSpeed": WARDEN_WALK, "stopDistance": 0.5,
+            "vision": True, "visionRange": 10.0, "fov": 360.0, "visionRegionDepth": 8,
+            "hearingRange": 0.0, "alertTimeout": 60,
+            "waypoints": [[x, WARDEN_START[1], z] for x, z in WARDEN_PATROL], "stateClips": {}}
 
 
 def shrine(name, pos):

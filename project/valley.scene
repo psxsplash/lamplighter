@@ -12319,6 +12319,41 @@
             "models/warden/idle.anim"
           ],
           "fps": 15
+        },
+        {
+          "type": "agent",
+          "startEnabled": true,
+          "moveSpeed": 1.4648438,
+          "stopDistance": 0.5,
+          "vision": true,
+          "visionRange": 10.0,
+          "fov": 360.0,
+          "visionRegionDepth": 8,
+          "hearingRange": 0.0,
+          "alertTimeout": 60,
+          "waypoints": [
+            [
+              -18.0,
+              0.0,
+              -30.0
+            ],
+            [
+              0.0,
+              0.0,
+              -44.0
+            ],
+            [
+              20.0,
+              0.0,
+              -24.0
+            ],
+            [
+              2.0,
+              0.0,
+              -22.0
+            ]
+          ],
+          "stateClips": {}
         }
       ],
       "children": []
