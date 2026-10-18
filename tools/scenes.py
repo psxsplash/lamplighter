@@ -366,8 +366,9 @@ def warden():
 def warden_agent():
     # Sees all round, 10 m (a square: psxsplash takes the larger of the x and
     # z distances), as far as 8 nav regions away, which on the valley's
-    # coarse nav is no limit inside 10 m. Two seconds (60 frames) unseen and
-    # he has lost the player. Deaf.
+    # coarse nav is no limit inside 10 m. 60 engine updates unseen (about
+    # four seconds at the valley's frame rate) and he has lost the player.
+    # Deaf.
     return {"type": "agent", "startEnabled": True, "moveSpeed": WARDEN_WALK, "stopDistance": 0.5,
             "vision": True, "visionRange": 10.0, "fov": 360.0, "visionRegionDepth": 8,
             "hearingRange": 0.0, "alertTimeout": 60,

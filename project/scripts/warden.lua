@@ -5,8 +5,9 @@
 -- player, 10 m all round. This script says what he does about it:
 --   he sees the player: he runs at him (Seek, the engine finding the way
 --   and following the player as he moves)
---   two seconds without seeing him (the agent's alert timeout): he walks on
---   to the corner he was making for
+--   60 updates without seeing him (the agent's alert timeout, which counts
+--   the engine's updates, not thirtieths of a second: about four seconds
+--   at the valley's frame rate): he walks on to the corner he was making for
 --   at each corner he waits a second and a half
 --   within CATCH he has caught the player: lost 2 in Persist, the
 --   `gameover` cutscene ("Caught by the Warden"), and back to the title,
@@ -19,8 +20,12 @@
 -- pointing down: a metre is 40.96 (written raw below, from metres * 4096 /
 -- 100). The agent's speed is whole raw units a frame at 30 frames a second:
 -- 2 is 1.46 m/s, 3 is 2.20 m/s, 4 is 2.93 m/s. The player's 3 m/s is stored
--- as 4 too, so he runs at 3, not the 4 nearer 2.6 m/s, which would keep up
--- with a walking player. onUpdate's dt is 4096 a thirtieth of a second.
+-- as 4 too, so he runs at 3, under the player's speed, and not at the 4
+-- nearer 2.6 m/s, which is the player's own. The engine steps an agent
+-- along the longer of x and z, so going diagonally he is up to 1.4 times as
+-- fast, and the d-pad's walk loses some to rounding: a walking player does
+-- not get away from him; a sprinting one does. onUpdate's dt is 4096 a
+-- thirtieth of a second.
 
 local NAME = "Warden"
 local function raw(dm) return dm * 4096 / 1000 end  -- decimetres to GTE raw
